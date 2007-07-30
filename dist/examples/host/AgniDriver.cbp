@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="5" />
+	<Project>
+		<Option title="AgniDriver" />
+		<Option makefile="Makefile.nix" />
+		<Option pch_mode="0" />
+		<Option default_target="" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="../../bin/AgniDriver" />
+				<Option object_output="../../../obj" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option projectResourceIncludeDirsRelation="1" />
+				<Compiler>
+					<Add option="-g3 -Wall" />
+				</Compiler>
+			</Target>
+		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="Debug;" />
+		</VirtualTargets>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-Werror -g3 -Wall" />
+		</Compiler>
+		<Unit filename="main.cpp">
+			<Option compilerVar="CPP" />
+			<Option target="Debug" />
+		</Unit>
+		<Unit filename="../../include/AgniCommonDefinitions.h">
+			<Option compilerVar="CPP" />
+			<Option compile="0" />
+			<Option link="0" />
+			<Option target="Debug" />
+		</Unit>
+		<Unit filename="../../include/AgniPlatformSpecific.h">
+			<Option compilerVar="CPP" />
+			<Option compile="0" />
+			<Option link="0" />
+			<Option target="Debug" />
+		</Unit>
+		<Unit filename="../../include/CAgni.h">
+			<Option compilerVar="CPP" />
+			<Option compile="0" />
+			<Option link="0" />
+			<Option target="Debug" />
+		</Unit>
+		<Unit filename="../../../src/AgniVirtualMachine/CAgni.cpp">
+			<Option compilerVar="CPP" />
+			<Option target="Debug" />
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

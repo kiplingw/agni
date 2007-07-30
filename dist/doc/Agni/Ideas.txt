@@ -1,0 +1,60 @@
+- Think of fast way of host finding resources quickly by offset. Need high
+  performance resource table.
+- assert() in scripts?
+- ac -S will tell compiler to stop after compilation, not assembling.
+- libAgni API
+- AgniBool Agni_Initialise(unsigned int unFlags = AF_DEFAULT);
+- AgniBool Agni_DeInitialise();
+- AgniScriptHandle Agni_Load(const char *pszFile);
+- const char *Agni_Version(AgniByte *pucMajor, AgniByte *pucMinor);
+- AgniBool Agni_UnLoad(AiurScriptHandle hScript = NULL);
+- AgniBool Agni_AddHostFunction(char *pszName, *pFunc, hScript = NULL);
+- AgniBool Agni_QueryScript(unsigned short usQuery, AiurByte *pResult, AiurScriptHandle hScript);
+- ??? Agni_CallFunction(AiurScriptHandle hScript, char *pszName);
+- AgniBool Agni_PushParameter(AgniParameter Parameter);
+- AgniBool Agni_PopParameter();
+- const char *Agni_GetError();
+- Have both a NSIS executable and a DevPak for the entire Agni system.
+- Allow resources! Perfect for games and skinning!
+  - $resource "c:\foo\blah\texture.png" "Texture"
+- UltraEdit syntax highlighting file
+- Standard Agni library (math stuff, random numbers, etc)
+- Nullsoft install for API registers cool icon with Agni executables.
+- C++ API with "C wrapper"
+- Look at FreeImage API pdf
+- Switch to list entire instruction set on aa.exe
+- Create Agni icon and logo. Distribute both. See FMod website for ideas.
+- Func [export] Foo { ...
+- boolean CAgni::IsFunctionDefined(const char *pszName);
+- Pre-processor for AgniAssembler has directives prefixed with '$'
+- Optimized boolean CAgni::FindFreeScriptHandle(HSCRIPT *phScript);
+- Permission denied
+  collect2: ld returned 1 exit status
+- Agni inline assembly
+- Integrate binary search tree into VM code base for handle search.
+- "Find" AVM instruction?
+- "-Q" Makes the compiler print out each function name as it is compiled, and print some statistics about each pass when it finishes.
+- In documentation, list possibilities of usage, such as increased webupdater flexibility.
+- Calculus and binomial theorem instructions? (silly, I know)
+- uint32 CAgni::GetMemoryUsed() {return sizeof(Scripts) + mallocs};
+- Check for previously defined primitives
+- Aim - Demonique entro for presentation?
+- __LINE__ and __FILE__ macros.
+- Dev-C++ Agni project template
+- makefile.lnx
+- Call DLLs and manually be able to invoke a routine of random parameter 
+  types.
+- uint8 CAgni::GetProcessorCount();
+- bool CAgni::ShiftToProcessor(uint8 Processor);
+- GCC frontend? Research in your GCC reference manual.
+- AgniSavedState *CAgni::SaveState(HSCRIPT hScript);
+- bool CAgni::RestoreState(AgniSavedState *pSavedState);
+- SORT [start] [number] virtual machine instruction
+- Install registers icons for various Agni files
+- Prepare man pages for toolkit on 'nix platforms.
+- AgniCompiler should warn if uninitialized variable used
+- select instruction...
+- Compress executable (zlib), allow for encryption and certificate embedding...
+  (-Z --compress-executable [level])
+- incorporate the autotools into the build environment
+- doxygen documentation

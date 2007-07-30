@@ -1,0 +1,25 @@
+293048 24 895523
+-3.14159
+235
+         253
+           {} 52435 345 {}
+/* think I'll comment out some stuff */
+[ MyVar0, MyVar1, MyVar2 ]
+           459245;
+
+    return
+
+var foo = 3;
+foo += 6;
+
+true, //false, ();
+
+Inside "Thing.ags"
+#include "DummyInclude.agh"
+
+func SomeFunction(first, second)
+{
+    var foo = 3;
+
+    return (foo * first * second);
+}
