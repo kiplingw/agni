@@ -1,0 +1,7 @@
+Building With SCons
+===================
+
+- Install the scons build tool for your platform. On Debian based systems, just
+  run "sudo apt-get install scons".
+
+

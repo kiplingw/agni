@@ -1,0 +1,73 @@
+; This listing is designed to test out some of the functional of 
+;  the AgniVirtualMachine and to ensure that both the script and
+;  the host are communicating properly...
+
+; Directives...
+SetStackSize        512
+SetThreadPriority   Low
+SetHost             "AgniDriver", 1, 1
+
+; Test stuff...
+Func TestStuff
+{
+    ; Print a string from the host...
+    push        1
+    push        "hello, world"
+    callhost    PrintString
+    
+    ; Print a string twice from the host...
+    push        4
+    push        " hello, world again"
+    callhost    PrintString
+    
+    ; Print eight strings from the host...
+        
+        ; Variables...
+        var Counter
+        mov Counter, 8
+        
+        ; Print string...
+        LoopStart:
+        
+            ; Display...
+            push        1
+            push        "  testing with a 200ms delay..."
+            callhost    PrintString
+            
+            ; Idle for a 1/5th of a second...
+            pause       200
+            
+            ; Prepare for next iteration...
+            dec         Counter
+            jg          Counter, 0, LoopStart
+
+    ; Return pi to host...
+        
+        ; Display intentions...
+        push        1
+        push        "Returning a value to the host..."
+        callhost    PrintString
+        
+        ; Store value in return register...
+        mov         _RegisterReturn, 3.1459
+}
+
+; Loop function that sits there printing text indefinetely...
+Func PrintLoop
+{
+    ; Begin print loop...
+    LoopStart:
+    
+        ; Prepare parameters for host...
+        push        1
+        push        "Sitting here, idling away..."
+        
+        ; Print string...
+        callhost    PrintString
+        
+        ; Idle for a 1/5th of a second...
+        pause       200
+        
+        ; Do it again...
+        jmp         LoopStart
+}
