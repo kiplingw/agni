@@ -1,5 +1,5 @@
 /*
-  Name:         AgniAssemblerMain.cpp
+  Name:         Main.cpp
   Copyright:    Kip Warner (Kip@TheVertigo.com)
   Description:  Entry point for command line interface to AgniAssembler...
 */
@@ -241,12 +241,12 @@ void PrintHelp()
 void PrintVersion()
 {
     // Version...
-    printf("AgniAssembler %d.%d\n\n"
+    printf("AgniAssembler %d.%dsvn%d\n\n"
            " Compiled With:\t%s\n"
            " Date:\t\t%s at %s.\n"
            " Platform:\t%s\n"
            " Byte Ordering:\t%s\n",
-           AGNI_VERSION_MAJOR, AGNI_VERSION_MINOR,
+           AGNI_VERSION_MAJOR, AGNI_VERSION_MINOR, AGNI_VERSION_SVN,
            __VERSION__,
            __DATE__, __TIME__,
            AGNI_HOST_TARGET, AGNI_HOST_BIG_ENDIAN ? "big-endian"

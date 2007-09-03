@@ -1,7 +1,16 @@
 Building With SCons
 ===================
 
-- Install the scons build tool for your platform. On Debian based systems, just
-  run "sudo apt-get install scons".
+- Install the scons build tool for your platform. On Debian based systems, 
+  sudo apt-get install scons should be sufficient.
 
+    http://www.scons.org/doc/production/HTML/scons-user/x124.html
+    
+  Win32 systems have a manual installer available to them above.
+
+- Building everything:
+    scons -Q [debug=0|1]
+
+  Building a component only (eg. assembler, compiler, etc):
+    scons -Q [aa|ac]
 

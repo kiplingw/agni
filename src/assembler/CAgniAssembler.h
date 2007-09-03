@@ -20,7 +20,7 @@
     // Includes...
 
         // Data types...
-        #include "../../dist/include/AgniPlatformSpecific.h"
+        #include "../include/AgniPlatformSpecific.h"
 
         // Standard I/O...
         #include <stdio.h>
@@ -64,7 +64,7 @@ class CAgniAssembler
     protected:
 
         // Common structures...
-        #include "../../dist/include/AgniCommonDefinitions.h"
+        #include "../include/AgniCommonDefinitions.h"
 
         // Operand type domain bitfield mask codes... (for parser)
         enum OTD

@@ -1,5 +1,5 @@
 /*
-  Name:         AgniCompilerMain.cpp
+  Name:         Main.cpp
   Author:       Kip Warner (Kip@TheVertigo.com)
   Description:  Entry point for command line interface to AgniCompiler...
 */
@@ -225,7 +225,7 @@ void PrintVersion()
 {
     // Version...
     cout << "AgniCompiler " << AGNI_VERSION_MAJOR << "." << AGNI_VERSION_MINOR 
-         << endl << endl
+         << "svn" << AGNI_VERSION_SVN << endl << endl
          << " Compiled With:\t" << __VERSION__ << endl
          << " Date:\t\t" << __DATE__ << " at " << __TIME__ << "." << endl
          << " Platform:\t" << AGNI_HOST_TARGET << endl

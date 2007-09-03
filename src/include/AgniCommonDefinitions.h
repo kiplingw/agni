@@ -11,10 +11,6 @@
 
 // Versioning...
 
-    // Major and minor assemble / compile time Agni version...
-    #define AGNI_VERSION_MAJOR          0
-    #define AGNI_VERSION_MINOR          94
-
     // Major and minor version numbers of minimum acceptable runtime...
     #define AGNI_VERSION_NEEDED_MAJOR   AGNI_VERSION_MAJOR
     #define AGNI_VERSION_NEEDED_MINOR   AGNI_VERSION_MINOR

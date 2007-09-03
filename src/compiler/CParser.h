@@ -14,8 +14,8 @@
     // Includes...
 
         // Data types...
-        #include "../../dist/include/AgniPlatformSpecific.h"
-        #include "../../dist/include/AgniCommonDefinitions.h"
+        #include "../include/AgniPlatformSpecific.h"
+        #include "../include/AgniCommonDefinitions.h"
         
         // Lexer class...
         #include "CLexer.h"
