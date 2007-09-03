@@ -1,7 +1,8 @@
 /*
   Name:         AgniCommonDefinitions.h
   Copyright:    Kip Warner (Kip@TheVertigo.com)
-  Description:  Definitons for structures and constants that are used
+  Description:  Definitons for structures and constants that are used across
+                the whole system...
 */
 
 // Includes...
@@ -9,224 +10,228 @@
     // Cross platform types...
     #include "AgniPlatformSpecific.h"
 
-// Versioning...
-
-    // Major and minor version numbers of minimum acceptable runtime...
-    #define AGNI_VERSION_NEEDED_MAJOR   AGNI_VERSION_MAJOR
-    #define AGNI_VERSION_NEEDED_MINOR   AGNI_VERSION_MINOR
-
-// Default file extensions...
-
-    // Assembly listing...
-    #define AGNI_FILE_EXTENSION_LISTING         "agl"
-    
-    // Source code...
-    #define AGNI_FILE_EXTENSION_SOURCE          "ags"
-    
-    // Source code header...
-    #define AGNI_FILE_EXTENSION_SOURCE_HEADER   "agh"
-
-    // Virtual machine executable...
-    #define AGNI_FILE_EXTENSION_EXECUTABLE      "age"
-
-// Default entry point function in script...
-#define AGNI_DEFAULT_ENTRY_FUNCTION             "Main"
-
-// Structures found in the Agni executables...
-
-    // Main header...
-    typedef struct AGNI_ATTRIBUTE_PACKED
-    {
-        // Agni executable signature...
-        char            Signature[8];
-
-        // Major and minor version numbers at assemble / compile time...
-        uint8           ucMajorAgniVersion;
-        uint8           ucMinorAgniVersion;
+// Within the Agni namespace...
+namespace Agni
+{
+    // Versioning...
 
         // Major and minor version numbers of minimum acceptable runtime...
-        uint8           ucMajorRequiredAgniVersion;
-        uint8           ucMinorRequiredAgniVersion;
+        #define AGNI_VERSION_NEEDED_MAJOR   AGNI_VERSION_MAJOR
+        #define AGNI_VERSION_NEEDED_MINOR   AGNI_VERSION_MINOR
 
-        // Host name string index (or -1), major, and minor version for
-        //  AgniVirtualMachine backend. eg "Gandalf Quest", 0x01, 0x02...
-        uint32          unHostStringIndex;
-        uint8           ucHostMajorVersion;
-        uint8           ucHostMinorVersion;
+    // Default file extensions...
 
-        // Checksum of entire executable, assuming this field to be zero...
-        uint32          unCheckSum;
+        // Assembly listing...
+        #define AGNI_FILE_EXTENSION_LISTING         "agl"
+        
+        // Source code...
+        #define AGNI_FILE_EXTENSION_SOURCE          "ags"
+        
+        // Source code header...
+        #define AGNI_FILE_EXTENSION_SOURCE_HEADER   "agh"
 
-        // Stack size... (-1 sets default size)
-        uint32          unStackSize;
+        // Virtual machine executable...
+        #define AGNI_FILE_EXTENSION_EXECUTABLE      "age"
 
-        // Global data size...
-        uint32          unGlobalDataSize;
+    // Default entry point function in script...
+    #define AGNI_DEFAULT_ENTRY_FUNCTION             "Main"
 
-        // Main function information... (-1 if not present)
-        uint32          unMainIndex;
+    // Structures found in the Agni executables...
 
-        // Thread priority type...
-        uint8           ThreadPriorityType;
-        uint32          unThreadPriorityUser;
+        // Main header...
+        typedef struct AGNI_ATTRIBUTE_PACKED
+        {
+            // Agni executable signature...
+            char            Signature[8];
 
-    }Agni_MainHeader;
+            // Major and minor version numbers at assemble / compile time...
+            uint8           ucMajorAgniVersion;
+            uint8           ucMinorAgniVersion;
 
-    // Instruction stream header...
-    typedef struct _Agni_InstructionStreamHeader
-    {
-        // Number of instructions...
-        uint32          unSize;
+            // Major and minor version numbers of minimum acceptable runtime...
+            uint8           ucMajorRequiredAgniVersion;
+            uint8           ucMinorRequiredAgniVersion;
 
-    }Agni_InstructionStreamHeader;
+            // Host name string index (or -1), major, and minor version for
+            //  AgniVirtualMachine backend. eg "Gandalf Quest", 0x01, 0x02...
+            uint32          unHostStringIndex;
+            uint8           ucHostMajorVersion;
+            uint8           ucHostMinorVersion;
 
-    // String stream header...
-    typedef struct _Agni_StringStreamHeader
-    {
-        // Number of strings in stream...
-        uint32  unSize;
+            // Checksum of entire executable, assuming this field to be zero...
+            uint32          unCheckSum;
 
-    }Agni_StringStreamHeader;
+            // Stack size... (-1 sets default size)
+            uint32          unStackSize;
 
-    // Function table header...
-    typedef struct _Agni_FunctionTableHeader
-    {
-        // Number of functions in table...
-        uint32 unSize;
+            // Global data size...
+            uint32          unGlobalDataSize;
 
-    }Agni_FunctionTableHeader;
+            // Main function information... (-1 if not present)
+            uint32          unMainIndex;
 
-    // Function structure...
-    typedef struct _Agni_Function
-    {
-        // Entry point...
-        uint32          unEntryPoint;
+            // Thread priority type...
+            uint8           ThreadPriorityType;
+            uint32          unThreadPriorityUser;
 
-        // Parameter count...
-        uint8           ParameterCount;
+        }Agni_MainHeader;
 
-        // Total local data size...
-        uint32          unLocalDataSize;
+        // Instruction stream header...
+        typedef struct _Agni_InstructionStreamHeader
+        {
+            // Number of instructions...
+            uint32          unSize;
 
-        // Total stack frame size...
-        uint32          unStackFrameSize;
+        }Agni_InstructionStreamHeader;
 
-        // Function name...
-        char            szName[256];
+        // String stream header...
+        typedef struct _Agni_StringStreamHeader
+        {
+            // Number of strings in stream...
+            uint32  unSize;
 
-    }Agni_Function;
+        }Agni_StringStreamHeader;
 
-    // Host function table header...
-    typedef struct _Agni_HostFunctionTableHeader
-    {
-        // Number of host functions in table...
-        uint32 unSize;
+        // Function table header...
+        typedef struct _Agni_FunctionTableHeader
+        {
+            // Number of functions in table...
+            uint32 unSize;
 
-    }Agni_HostFunctionTableHeader;
+        }Agni_FunctionTableHeader;
 
-    // Host function...
-    typedef struct _Agni_HostFunction
-    {
-        // Function names...
-        char    szName[256];
+        // Function structure...
+        typedef struct _Agni_Function
+        {
+            // Entry point...
+            uint32          unEntryPoint;
 
-    }Agni_HostFunction;
+            // Parameter count...
+            uint8           ParameterCount;
 
-// Components of the virtual hardware...
+            // Total local data size...
+            uint32          unLocalDataSize;
 
-    // Agni virtual machine instruction set...
-    enum INSTRUCTION_AVM
-    {
-        // Main...
-        INSTRUCTION_AVM_MOV = 1,
+            // Total stack frame size...
+            uint32          unStackFrameSize;
 
-        // Arithmetic...
-        INSTRUCTION_AVM_ADD,        /* 2 */
-        INSTRUCTION_AVM_SUB,
-        INSTRUCTION_AVM_MUL,
-        INSTRUCTION_AVM_DIV,
-        INSTRUCTION_AVM_MOD,
-        INSTRUCTION_AVM_EXP,
-        INSTRUCTION_AVM_NEG,
-        INSTRUCTION_AVM_INC,
-        INSTRUCTION_AVM_DEC,
+            // Function name...
+            char            szName[256];
 
-        // Bitwise...
-        INSTRUCTION_AVM_AND,        /* 11 */
-        INSTRUCTION_AVM_OR,
-        INSTRUCTION_AVM_XOR,
-        INSTRUCTION_AVM_NOT,
-        INSTRUCTION_AVM_SHL,
-        INSTRUCTION_AVM_SHR,
+        }Agni_Function;
 
-        // String manipulation...
-        INSTRUCTION_AVM_CONCAT,     /* 17 */
-        INSTRUCTION_AVM_GETCHAR,
-        INSTRUCTION_AVM_SETCHAR,
+        // Host function table header...
+        typedef struct _Agni_HostFunctionTableHeader
+        {
+            // Number of host functions in table...
+            uint32 unSize;
 
-        // Branching...
-        INSTRUCTION_AVM_JMP,        /* 20 */
-        INSTRUCTION_AVM_JE,
-        INSTRUCTION_AVM_JNE,
-        INSTRUCTION_AVM_JG,
-        INSTRUCTION_AVM_JL,
-        INSTRUCTION_AVM_JGE,
-        INSTRUCTION_AVM_JLE,
+        }Agni_HostFunctionTableHeader;
 
-        // Stack interface...
-        INSTRUCTION_AVM_PUSH,       /* 27 */
-        INSTRUCTION_AVM_POP,
+        // Host function...
+        typedef struct _Agni_HostFunction
+        {
+            // Function names...
+            char    szName[256];
 
-        // Function interface...
-        INSTRUCTION_AVM_CALL,       /* 29 */
-        INSTRUCTION_AVM_RET,
-        INSTRUCTION_AVM_CALLHOST,
+        }Agni_HostFunction;
 
-        // Miscellaneous...
-        INSTRUCTION_AVM_RAND,       /* 32 */
-        INSTRUCTION_AVM_PAUSE,
-        INSTRUCTION_AVM_EXIT
-    };
+    // Components of the virtual hardware...
 
-    // Operand type codes for assembled executable instruction stream...
-    enum OT_AVM
-    {
-        OT_AVM_NULL = 0x00,
-        OT_AVM_INTEGER,
-        OT_AVM_FLOAT,
-        OT_AVM_INDEX_STRING,
-        OT_AVM_STRING,
-        OT_AVM_INDEX_STACK_ABSOLUTE,
-        OT_AVM_INDEX_STACK_RELATIVE,
-        OT_AVM_INDEX_INSTRUCTION,
-        OT_AVM_INDEX_FUNCTION,
-        OT_AVM_INDEX_FUNCTION_HOST,
-        OT_AVM_REGISTER,
-        OT_AVM_STACK_BASE_MARKER
-    };
+        // Agni virtual machine instruction set...
+        enum INSTRUCTION_AVM
+        {
+            // Main...
+            INSTRUCTION_AVM_MOV = 1,
 
-    // Threading priorities...
-    enum THREAD_PRIORITY
-    {
-        THREAD_PRIORITY_USER = 0,
-        THREAD_PRIORITY_LOW,
-        THREAD_PRIORITY_MEDIUM,
-        THREAD_PRIORITY_HIGH,
-        THREAD_PRIORITY_INFINITE = (unsigned) -1
-    };
+            // Arithmetic...
+            INSTRUCTION_AVM_ADD,        /* 2 */
+            INSTRUCTION_AVM_SUB,
+            INSTRUCTION_AVM_MUL,
+            INSTRUCTION_AVM_DIV,
+            INSTRUCTION_AVM_MOD,
+            INSTRUCTION_AVM_EXP,
+            INSTRUCTION_AVM_NEG,
+            INSTRUCTION_AVM_INC,
+            INSTRUCTION_AVM_DEC,
 
-    // Registers...
-    enum REGISTER_AVM
-    {
-        // Two general purpose registers...
-        REGISTER_AVM_T0     = 0x01,
-        REGISTER_AVM_T1,
+            // Bitwise...
+            INSTRUCTION_AVM_AND,        /* 11 */
+            INSTRUCTION_AVM_OR,
+            INSTRUCTION_AVM_XOR,
+            INSTRUCTION_AVM_NOT,
+            INSTRUCTION_AVM_SHL,
+            INSTRUCTION_AVM_SHR,
 
-        // Return value...
-        REGISTER_AVM_RETURN
-    };
+            // String manipulation...
+            INSTRUCTION_AVM_CONCAT,     /* 17 */
+            INSTRUCTION_AVM_GETCHAR,
+            INSTRUCTION_AVM_SETCHAR,
 
-// Miscellaneous...
+            // Branching...
+            INSTRUCTION_AVM_JMP,        /* 20 */
+            INSTRUCTION_AVM_JE,
+            INSTRUCTION_AVM_JNE,
+            INSTRUCTION_AVM_JG,
+            INSTRUCTION_AVM_JL,
+            INSTRUCTION_AVM_JGE,
+            INSTRUCTION_AVM_JLE,
 
-    // Cyclic redundancy check checksum key... (Ethernet, PKZip, etc)
-    #define AGNI_CHECKSUM_KEY 0x04c11db7
+            // Stack interface...
+            INSTRUCTION_AVM_PUSH,       /* 27 */
+            INSTRUCTION_AVM_POP,
+
+            // Function interface...
+            INSTRUCTION_AVM_CALL,       /* 29 */
+            INSTRUCTION_AVM_RET,
+            INSTRUCTION_AVM_CALLHOST,
+
+            // Miscellaneous...
+            INSTRUCTION_AVM_RAND,       /* 32 */
+            INSTRUCTION_AVM_PAUSE,
+            INSTRUCTION_AVM_EXIT
+        };
+
+        // Operand type codes for assembled executable instruction stream...
+        enum OT_AVM
+        {
+            OT_AVM_NULL = 0x00,
+            OT_AVM_INTEGER,
+            OT_AVM_FLOAT,
+            OT_AVM_INDEX_STRING,
+            OT_AVM_STRING,
+            OT_AVM_INDEX_STACK_ABSOLUTE,
+            OT_AVM_INDEX_STACK_RELATIVE,
+            OT_AVM_INDEX_INSTRUCTION,
+            OT_AVM_INDEX_FUNCTION,
+            OT_AVM_INDEX_FUNCTION_HOST,
+            OT_AVM_REGISTER,
+            OT_AVM_STACK_BASE_MARKER
+        };
+
+        // Threading priorities...
+        enum THREAD_PRIORITY
+        {
+            THREAD_PRIORITY_USER = 0,
+            THREAD_PRIORITY_LOW,
+            THREAD_PRIORITY_MEDIUM,
+            THREAD_PRIORITY_HIGH,
+            THREAD_PRIORITY_INFINITE = (unsigned) -1
+        };
+
+        // Registers...
+        enum REGISTER_AVM
+        {
+            // Two general purpose registers...
+            REGISTER_AVM_T0     = 0x01,
+            REGISTER_AVM_T1,
+
+            // Return value...
+            REGISTER_AVM_RETURN
+        };
+
+    // Miscellaneous...
+
+        // Cyclic redundancy check checksum key... (Ethernet, PKZip, etc)
+        uint32 const unCheckSumKey = 0x04c11db7;}
+

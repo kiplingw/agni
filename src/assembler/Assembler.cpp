@@ -1,45 +1,52 @@
 /*
-  Name:         CAgniAssembler.cpp (implementation)
+  Name:         Assembler.cpp (implementation)
   Copyright:    Kip Warner (Kip@TheVertigo.com)
   Description:  Routines to produce an Agni executable from an Agni assembly
                 listing...
 */
 
 // Includes...
-#include "CAgniAssembler.h"
+#include "Assembler.h"
+#include <getopt.h>
+#include <iostream>
+
+// Using the Agni assembler namespace...
+using namespace Agni;
 
 // Constructor...
-CAgniAssembler::CAgniAssembler(AssemblerParameters *pParameters)
+Assembler::Assembler(Parameters &_UserParameters)
+    :   UserParameters(_UserParameters),
+        usInstructionCount(0),
+        ppszListing(NULL),
+        unListingLines(0),
+        pInstructionStream(NULL),
+        LexerState(LEXER_NO_STRING),
+        unLexerIndex0(0),
+        unLexerIndex1(0),
+        unLexerLine(0),
+        unLexerCurrentToken(TOKEN_INVALID),
+        unTempCheckSum(0),
+        unOutputBufferAllocated(0),
+        pOutputBuffer(NULL)
 {
     // Variables...
-    uint16 unInstructionIndex   = 0;
+    unsigned int unInstructionIndex = 0;
 
-    // Initialize variables to default state...
-    usInstructionCount = 0;
-
-    // Initialize object variables to defaults...
-    ppszListing                             = NULL;
-    unListingLines                          = 0;
-    pInstructionStream                      = NULL;
+    // Clear out instruction stream header...
     memset(&InstructionStreamHeader, 0, sizeof(Agni_InstructionStreamHeader));
+    
+    // Initialize our tables...
     List_Initialize(&StringTable);
     List_Initialize(&FunctionTable);
     List_Initialize(&SymbolTable);
     List_Initialize(&LabelTable);
     List_Initialize(&HostFunctionTable);
-    LexerState                              = LEXER_NO_STRING;
-    unLexerIndex0                           = 0;
-    unLexerIndex1                           = 0;
-    unLexerLine                             = 0;
-    unLexerCurrentToken                     = TOKEN_INVALID;
-    memset(szCurrentLexeme, '\x0', sizeof(szCurrentLexeme));
-    memset(&MainHeader, 0, sizeof(Agni_MainHeader));
-    unTempCheckSum                          = 0;
-    unOutputBufferAllocated                 = 0;
-    pOutputBuffer                           = NULL;
 
-    // Store parameters...
-    memcpy(&Parameters, pParameters, sizeof(AssemblerParameters));
+    // Clear the current lexeme...
+    memset(szCurrentLexeme, '\x0', sizeof(szCurrentLexeme));
+    
+    // Clear the main executable header...
+    memset(&MainHeader, 0, sizeof(Agni_MainHeader));
 
     // Initialize instruction set table...
 
@@ -420,19 +427,23 @@ CAgniAssembler::CAgniAssembler(AssemblerParameters *pParameters)
             unInstructionIndex = AddInstruction("Exit", INSTRUCTION_AVM_EXIT, 0);
 
     // Be verbose...
-    ErrorVerbose("loaded assembler parameters");
-    ErrorVerbose("parameters->assembler: `%s'", Parameters.szAssemblerName);
-    ErrorVerbose("parameters->input: `%s'", Parameters.szInputFile);
-    ErrorVerbose("parameters->optimization: %d", Parameters.ucOptimization);
-    ErrorVerbose("parameters->output: `%s'", Parameters.szOutputFile);
-    ErrorVerbose("parameters->verbose: %s", Parameters.bVerbose ? "true"
-                                                                : "false");
+    ErrorVerbose("loaded assembler settings");
+    ErrorVerbose("settings->assembler: `%s'", 
+                 UserParameters.GetProcessName().c_str());
+    ErrorVerbose("settings->input: `%s'", 
+                 UserParameters.GetInputFile().c_str());
+    ErrorVerbose("settings->optimization: %d", 
+                 UserParameters.GetOptimizationLevel());
+    ErrorVerbose("settings->output: `%s'", 
+                 UserParameters.GetOutputFile().c_str());
+    ErrorVerbose("settings->verbose: %s", UserParameters.BeVerbose() ? "true"
+                                                                     : "false");
     ErrorVerbose("initialized instruction set table with %d instructions",
                  GetInstructionSetSize());
 }
 
 // Add function and return index, or -1 on error...
-int32 CAgniAssembler::AddFunction(const char *pszName, uint32 unEntryPoint)
+int32 Assembler::AddFunction(const char *pszName, uint32 unEntryPoint)
 {
     // Variables...
     AA_FunctionNodeData    *pNewFunctionNodeData    = NULL;
@@ -462,9 +473,9 @@ int32 CAgniAssembler::AddFunction(const char *pszName, uint32 unEntryPoint)
 }
 
 // Add instruction and return index, or -1 on error...
-int32 CAgniAssembler::AddInstruction(const char *pszMnemonic,
-                                     uint16 usOperationCode,
-                                     uint8 OperandCount)
+int32 Assembler::AddInstruction(const char *pszMnemonic,
+                                uint16 usOperationCode,
+                                uint8 OperandCount)
 {
     // Ensure we haven't run out of instruction indices...
     if(usInstructionCount >= (sizeof(InstructionTable) /
@@ -505,8 +516,8 @@ int32 CAgniAssembler::AddInstruction(const char *pszMnemonic,
 }
 
 // Add a label and return index, or -1 on error...
-int32 CAgniAssembler::AddLabel(const char *pszIdentifier,
-                             uint32 unTargetIndex, uint32 unFunctionIndex)
+int32 Assembler::AddLabel(const char *pszIdentifier,
+                          uint32 unTargetIndex, uint32 unFunctionIndex)
 {
     // Variables...
     AA_LabelNodeData   *pNewLabelNodeData   = NULL;
@@ -536,7 +547,7 @@ int32 CAgniAssembler::AddLabel(const char *pszIdentifier,
 }
 
 // Add string to linked list and return index...
-uint32 CAgniAssembler::AddString(AA_LinkedList *pList, const char *pszString)
+uint32 Assembler::AddString(AA_LinkedList *pList, const char *pszString)
 {
     // Variables...
     AA_LinkedListNode  *pNode   = NULL;
@@ -569,8 +580,8 @@ uint32 CAgniAssembler::AddString(AA_LinkedList *pList, const char *pszString)
 }
 
 // Add symbol, or -1 on error...
-int32 CAgniAssembler::AddSymbol(const char *pszIdentifier, uint32 unSize,
-                              int32 nStackIndex, uint32 unFunctionIndex)
+int32 Assembler::AddSymbol(const char *pszIdentifier, uint32 unSize,
+                           int32 nStackIndex, uint32 unFunctionIndex)
 {
     // Variables...
     AA_SymbolNodeData  *pNewSymbolNodeData  = NULL;
@@ -601,7 +612,7 @@ int32 CAgniAssembler::AddSymbol(const char *pszIdentifier, uint32 unSize,
 }
 
 // Assemble listing...
-boolean CAgniAssembler::Assemble()
+boolean Assembler::Assemble()
 {
     // Variables...
     int32                   nTemp                           = 0;
@@ -618,7 +629,7 @@ boolean CAgniAssembler::Assemble()
     // Verify parameters...
 
         // No input file specified...
-        if(!strlen(Parameters.szInputFile))
+        if(UserParameters.GetInputFile().empty())
         {
             // Abort...
             ErrorGeneral("no input file");
@@ -626,7 +637,7 @@ boolean CAgniAssembler::Assemble()
         }
 
         // No output file specified...
-        if(!strlen(Parameters.szOutputFile))
+        if(!UserParameters.GetOutputFile().empty())
         {
             // Abort...
             ErrorGeneral("no output file specified");
@@ -634,7 +645,8 @@ boolean CAgniAssembler::Assemble()
         }
 
         // Input and output files are the same...
-        if(strcasecmp(Parameters.szInputFile, Parameters.szOutputFile) == 0)
+        if(strcasecmp(UserParameters.GetInputFile().c_str(), 
+                      UserParameters.GetOutputFile().c_str()) == 0)
         {
             // Abort...
             ErrorGeneral("input and output are the same location");
@@ -1694,7 +1706,7 @@ boolean CAgniAssembler::Assemble()
     ErrorVerbose("assembly complete");
 
     // Display statistics, if verbose mode enabled...
-    if(Parameters.bVerbose)
+    if(UserParameters.BeVerbose())
         DisplayStatistics();
 
     // Done...
@@ -1702,7 +1714,7 @@ boolean CAgniAssembler::Assemble()
 }
 
 // Acknowledge bit in calculation...
-inline void CAgniAssembler::CheckSum_PutBit(boolean Bit)
+inline void Assembler::CheckSum_PutBit(boolean Bit)
 {
     // Variables...
     boolean TopBit = 0;
@@ -1716,11 +1728,11 @@ inline void CAgniAssembler::CheckSum_PutBit(boolean Bit)
 
     // Calculate checksum...
     if(TopBit)
-        unTempCheckSum ^= AGNI_CHECKSUM_KEY;
+        unTempCheckSum ^= unCheckSumKey;
 }
 
 // Acknowledge byte in calculation...
-inline void CAgniAssembler::CheckSum_PutByte(uint8 Byte)
+inline void Assembler::CheckSum_PutByte(uint8 Byte)
 {
     // Variables...
     uint16  usBit   = 0;
@@ -1738,7 +1750,7 @@ inline void CAgniAssembler::CheckSum_PutByte(uint8 Byte)
 }
 
 // Acknowledge stream of bytes in calculation...
-void CAgniAssembler::CheckSum_PutBytes(uint8 *pBytes, uint32 unSize)
+void Assembler::CheckSum_PutBytes(uint8 *pBytes, uint32 unSize)
 {
     // Variables...
     unsigned long unIndex = 0;
@@ -1749,7 +1761,7 @@ void CAgniAssembler::CheckSum_PutBytes(uint8 *pBytes, uint32 unSize)
 }
 
 // Display statistics...
-void CAgniAssembler::DisplayStatistics() const
+void Assembler::DisplayStatistics() const
 {
     // Variables...
     unsigned int        unVariables     = 0;
@@ -1845,18 +1857,18 @@ void CAgniAssembler::DisplayStatistics() const
 }
 
 // Expected a character, but did not find...
-void CAgniAssembler::ErrorExpectedCharacter(char cExpected)
+void Assembler::ErrorExpectedCharacter(char cExpected)
 {
     // Output...
-    printf("%s: %d: error: `%c' expected\n", Parameters.szInputFile,
-           unLexerLine + 1, cExpected);
+    std::cout << UserParameters.GetInputFile() << ": " << unLexerLine + 1 
+              << ": error: '" << cExpected << "' expected" << std::endl;
 
     // Cleanup all resources, reset state, and shutdown assembler...
     ShutDown();
 }
 
 // General error...
-void CAgniAssembler::ErrorGeneral(const char *pszFormat, ...)
+void Assembler::ErrorGeneral(const char *pszFormat, ...)
 {
     // Variables...
     va_list pArgumentList;
@@ -1874,14 +1886,15 @@ void CAgniAssembler::ErrorGeneral(const char *pszFormat, ...)
         va_end(pArgumentList);
 
     // Output...
-    printf("%s: error: %s\n", Parameters.szAssemblerName, szBuffer);
+    std::cout << UserParameters.GetProcessName() << ": error: " << szBuffer 
+              << std::endl;
 
     // Cleanup all resources, reset state, and shutdown assembler...
     ShutDown();
 }
 
 // Error due to listing...
-void CAgniAssembler::ErrorListing(const char *pszFormat, ...)
+void Assembler::ErrorListing(const char *pszFormat, ...)
 {
     // Variables...
     va_list pArgumentList;
@@ -1899,26 +1912,26 @@ void CAgniAssembler::ErrorListing(const char *pszFormat, ...)
         va_end(pArgumentList);
 
     // Output...
-    printf("%s: %d: error: %s\n", Parameters.szInputFile, unLexerLine + 1,
-           szBuffer);
+    std::cout << UserParameters.GetProcessName() << ": " << unLexerLine + 1
+              << ": error: " << szBuffer << std::endl;
 
     // Cleanup all resources, reset state, and shutdown assembler...
     ShutDown();
 }
 
 // Verbose output...
-void CAgniAssembler::ErrorVerbose(const char *pszFormat, ...)
+void Assembler::ErrorVerbose(const char *pszFormat, ...)
 {
     // Variables...
     va_list pArgumentList;
     char    szBuffer[1024]  = {0};
 
     // Verbose mode not enabled, ignore...
-    if(!Parameters.bVerbose)
+    if(!UserParameters.BeVerbose())
         return;
 
-    // Output is standard output device, ingore...
-    if(strcasecmp(Parameters.szOutputFile, "stdout") == 0)
+    // Output is standard output device, ignore to avoid corruption...
+    if(UserParameters.GetOutputFile() == "stdout")
         return;
 
     // Format message...
@@ -1933,11 +1946,12 @@ void CAgniAssembler::ErrorVerbose(const char *pszFormat, ...)
         va_end(pArgumentList);
 
     // Output...
-    printf("%s: %s\n", Parameters.szAssemblerName, szBuffer);
+    std::cout << UserParameters.GetProcessName() << ": " << szBuffer 
+              << std::endl;
 }
 
 // Warning...
-void CAgniAssembler::ErrorWarning(const char *pszFormat, ...)
+void Assembler::ErrorWarning(const char *pszFormat, ...)
 {
     // Variables...
     va_list pArgumentList;
@@ -1955,19 +1969,19 @@ void CAgniAssembler::ErrorWarning(const char *pszFormat, ...)
         va_end(pArgumentList);
 
     // Output...
-    printf("%s: %d: warning: %s\n", Parameters.szInputFile, unLexerLine + 1,
-           szBuffer);
+    std::cout << UserParameters.GetProcessName() << ": " << unLexerLine + 1
+              << ": warning: " << szBuffer << std::endl;
 }
 
 // Get the current lexeme...
-const char *CAgniAssembler::GetCurrentLexeme() const
+const char *Assembler::GetCurrentLexeme() const
 {
     // Return it...
     return szCurrentLexeme;
 }
 
 // Get the current lexeme and store for caller...
-char *CAgniAssembler::GetCurrentLexeme(char *pszBuffer) const
+char *Assembler::GetCurrentLexeme(char *pszBuffer) const
 {
     // Store for caller...
     strcpy(pszBuffer, szCurrentLexeme);
@@ -1977,14 +1991,14 @@ char *CAgniAssembler::GetCurrentLexeme(char *pszBuffer) const
 }
 
 // Get the current token...
-CAgniAssembler::Token CAgniAssembler::GetCurrentToken() const
+Assembler::Token Assembler::GetCurrentToken() const
 {
     // Return it...
     return unLexerCurrentToken;
 }
 
 // Get function node's data by name...
-CAgniAssembler::AA_FunctionNodeData *CAgniAssembler::GetFunctionByName(
+Assembler::AA_FunctionNodeData *Assembler::GetFunctionByName(
     const char *pszName)
 {
     // Variables...
@@ -2014,7 +2028,7 @@ CAgniAssembler::AA_FunctionNodeData *CAgniAssembler::GetFunctionByName(
 }
 
 // Get instruction by mnemonic...
-boolean CAgniAssembler::GetInstructionByMnemonic(
+boolean Assembler::GetInstructionByMnemonic(
     const char *pszMnemonic, AA_InstructionLookup *pInstructionLookup) const
 {
     // Variables...
@@ -2039,16 +2053,15 @@ boolean CAgniAssembler::GetInstructionByMnemonic(
 }
 
 // Get the instruction set size...
-uint16 CAgniAssembler::GetInstructionSetSize()
+uint16 Assembler::GetInstructionSetSize()
 {
     // Return it...
     return usInstructionCount;
 }
 
 // Get a label by identifier...
-CAgniAssembler::AA_LabelNodeData *
-CAgniAssembler::GetLabelByIdentifier(const char *pszIdentifier,
-                                     uint32 unFunctionIndex) const
+Assembler::AA_LabelNodeData *Assembler::GetLabelByIdentifier(
+    const char *pszIdentifier, uint32 unFunctionIndex) const
 {
     // Variables...
     AA_LinkedListNode  *pNode           = NULL;
@@ -2078,7 +2091,7 @@ CAgniAssembler::GetLabelByIdentifier(const char *pszIdentifier,
 }
 
 // Get the first character of next token...
-char CAgniAssembler::GetLookAheadCharacter() const
+char Assembler::GetLookAheadCharacter() const
 {
     // Variables...
     uint32          unLine  = 0;
@@ -2122,7 +2135,7 @@ char CAgniAssembler::GetLookAheadCharacter() const
 }
 
 // Get the next token...
-CAgniAssembler::Token CAgniAssembler::GetNextToken()
+Assembler::Token Assembler::GetNextToken()
 {
     // Variables...
     uint32                  unSourceIndex       = 0;
@@ -2393,9 +2406,8 @@ CAgniAssembler::Token CAgniAssembler::GetNextToken()
 }
 
 // Get symbol size by identifier...
-uint32
-CAgniAssembler::GetSizeByIdentifier(const char *pszIdentifier,
-                                    uint32 unFunctionIndex) const
+uint32 Assembler::GetSizeByIdentifier(const char *pszIdentifier,
+                                      uint32 unFunctionIndex) const
 {
     // Variables...
     AA_SymbolNodeData  *pSymbolNodeData = NULL;
@@ -2408,9 +2420,8 @@ CAgniAssembler::GetSizeByIdentifier(const char *pszIdentifier,
 }
 
 // Get the stack index by identifier...
-int32
-CAgniAssembler::GetStackIndexByIdentifier(const char *pszIdentifier,
-                                          uint32 unFunctionIndex) const
+int32 Assembler::GetStackIndexByIdentifier(const char *pszIdentifier,
+                                           uint32 unFunctionIndex) const
 {
     // Variables...
     AA_SymbolNodeData  *pSymbolNodeData = NULL;
@@ -2424,9 +2435,8 @@ CAgniAssembler::GetStackIndexByIdentifier(const char *pszIdentifier,
 }
 
 // Get symbol data by identifier...
-CAgniAssembler::AA_SymbolNodeData *
-CAgniAssembler::GetSymbolByIdentifier(const char *pszIdentifier,
-                                      uint32 unFunctionIndex) const
+Assembler::AA_SymbolNodeData *Assembler::GetSymbolByIdentifier(
+    const char *pszIdentifier, uint32 unFunctionIndex) const
 {
     // Variables...
     AA_LinkedListNode  *pNode           = NULL;
@@ -2456,7 +2466,7 @@ CAgniAssembler::GetSymbolByIdentifier(const char *pszIdentifier,
 }
 
 // Is character part of a delimeter?
-boolean CAgniAssembler::IsCharacterDelimiter(char cCharacter) const
+boolean Assembler::IsCharacterDelimiter(char cCharacter) const
 {
     // Anything that seperates elements is a delimeter...
     if((cCharacter == ':') || (cCharacter == ',')  ||
@@ -2472,7 +2482,7 @@ boolean CAgniAssembler::IsCharacterDelimiter(char cCharacter) const
 }
 
 // Is character valid for being part of an identifier?
-boolean CAgniAssembler::IsCharacterIdentifier(char cCharacter) const
+boolean Assembler::IsCharacterIdentifier(char cCharacter) const
 {
     // Identifier if a number, letter, or underscore...
     if((cCharacter >= '0' && cCharacter <= '9') ||
@@ -2487,7 +2497,7 @@ boolean CAgniAssembler::IsCharacterIdentifier(char cCharacter) const
 }
 
 // Is character numeric?
-boolean CAgniAssembler::IsCharacterNumeric(char cCharacter) const
+boolean Assembler::IsCharacterNumeric(char cCharacter) const
 {
     // Numeric...
     if(cCharacter >= '0' && cCharacter <= '9')
@@ -2499,7 +2509,7 @@ boolean CAgniAssembler::IsCharacterNumeric(char cCharacter) const
 }
 
 // Is character white space?
-boolean CAgniAssembler::IsCharacterWhiteSpace(char cCharacter) const
+boolean Assembler::IsCharacterWhiteSpace(char cCharacter) const
 {
     // White space if a space or a horizontal tab...
     if(cCharacter == ' ' || cCharacter == '\t')
@@ -2511,7 +2521,7 @@ boolean CAgniAssembler::IsCharacterWhiteSpace(char cCharacter) const
 }
 
 // Is string a float?
-boolean CAgniAssembler::IsStringFloat(const char *pszString) const
+boolean Assembler::IsStringFloat(const char *pszString) const
 {
     // Variables...
     uint32  unIndex             = 0;
@@ -2572,7 +2582,7 @@ boolean CAgniAssembler::IsStringFloat(const char *pszString) const
 }
 
 // Is string a valid identifier?
-boolean CAgniAssembler::IsStringIdentifier(const char *pszString) const
+boolean Assembler::IsStringIdentifier(const char *pszString) const
 {
     // Variables...
     uint32  unIndex = 0;
@@ -2604,7 +2614,7 @@ boolean CAgniAssembler::IsStringIdentifier(const char *pszString) const
 }
 
 // Is string an integer?
-boolean CAgniAssembler::IsStringInteger(const char *pszString) const
+boolean Assembler::IsStringInteger(const char *pszString) const
 {
     // Variables...
     uint32  unIndex = 0;
@@ -2641,7 +2651,7 @@ boolean CAgniAssembler::IsStringInteger(const char *pszString) const
 }
 
 // Is string white space?
-boolean CAgniAssembler::IsStringWhiteSpace(const char *pszString) const
+boolean Assembler::IsStringWhiteSpace(const char *pszString) const
 {
     // Variables...
     uint32  unIndex = 0;
@@ -2669,7 +2679,7 @@ boolean CAgniAssembler::IsStringWhiteSpace(const char *pszString) const
 }
 
 // Add node to linked list and return index...
-uint32 CAgniAssembler::List_Add(AA_LinkedList *pList, void *pData)
+uint32 Assembler::List_Add(AA_LinkedList *pList, void *pData)
 {
     // Variables...
     AA_LinkedListNode  *pNewNode = NULL;
@@ -2709,7 +2719,7 @@ uint32 CAgniAssembler::List_Add(AA_LinkedList *pList, void *pData)
 }
 
 // Initialize linked list...
-void CAgniAssembler::List_Initialize(AA_LinkedList *pList)
+void Assembler::List_Initialize(AA_LinkedList *pList)
 {
     // Clear head and tail node pointers...
     pList->pHead    = NULL;
@@ -2720,7 +2730,7 @@ void CAgniAssembler::List_Initialize(AA_LinkedList *pList)
 }
 
 // Free linked list...
-void CAgniAssembler::List_Free(AA_LinkedList *pList)
+void Assembler::List_Free(AA_LinkedList *pList)
 {
     // Variables...
     AA_LinkedListNode  *pNode       = NULL;
@@ -2749,7 +2759,7 @@ void CAgniAssembler::List_Free(AA_LinkedList *pList)
 }
 
 // Load input file, throw string on error...
-void CAgniAssembler::LoadInput()
+void Assembler::LoadInput()
 {
     // Variables...
     FILE           *hInput              = NULL;
@@ -2764,17 +2774,17 @@ void CAgniAssembler::LoadInput()
     // Open input...
 
         // Be verbose...
-        ErrorVerbose("opening `%s'", Parameters.szInputFile);
+        ErrorVerbose("opening `%s'", UserParameters.GetInputFile().c_str());
 
         // Standard input pipe...
-        if(strcasecmp(Parameters.szInputFile, "stdin") == 0)
+        if(UserParameters.GetInputFile() == "stdin")
             hInput = stdin;
 
         // Listing on disk...
         else
         {
             // Open...
-            hInput = fopen(Parameters.szInputFile, "rb");
+            hInput = fopen(UserParameters.GetInputFile().c_str(), "rb");
 
                 // Failed...
                 if(!hInput)
@@ -2958,7 +2968,7 @@ void CAgniAssembler::LoadInput()
 }
 
 // Reset lexer...
-void CAgniAssembler::ResetLexer()
+void Assembler::ResetLexer()
 {
     // Be verbose...
     ErrorVerbose("resetting lexer");
@@ -2978,7 +2988,7 @@ void CAgniAssembler::ResetLexer()
 }
 
 // Seek to the next line, if there is one...
-boolean CAgniAssembler::SeekToNextLine()
+boolean Assembler::SeekToNextLine()
 {
     // Increment line counter...
     unLexerLine++;
@@ -2999,7 +3009,7 @@ boolean CAgniAssembler::SeekToNextLine()
 }
 
 // Set function parameter count and local data size...
-void CAgniAssembler::SetFunctionInfo(const char *pszName, uint8 ParameterCount,
+void Assembler::SetFunctionInfo(const char *pszName, uint8 ParameterCount,
                                      uint32 unLocalDataSize)
 {
     // Variables...
@@ -3014,7 +3024,7 @@ void CAgniAssembler::SetFunctionInfo(const char *pszName, uint8 ParameterCount,
 }
 
 // Set instruction operand type...
-void CAgniAssembler::SetOperandType(uint16 usInstructionIndex,
+void Assembler::SetOperandType(uint16 usInstructionIndex,
                                     uint8 OperandIndex, AA_OperandType Type)
 {
     // Set requested operand to given operand type...
@@ -3023,7 +3033,7 @@ void CAgniAssembler::SetOperandType(uint16 usInstructionIndex,
 }
 
 // Cleanup all resources, reset state, and shutdown assembler...
-void CAgniAssembler::ShutDown()
+void Assembler::ShutDown()
 {
     // Variables...
     uint32 unIndex = 0;
@@ -3086,7 +3096,7 @@ void CAgniAssembler::ShutDown()
 }
 
 // Strip comments from source line...
-void CAgniAssembler::StripComments(char *pszSourceLine)
+void Assembler::StripComments(char *pszSourceLine)
 {
     // Variables...
     uint32  unIndex         = 0;
@@ -3123,7 +3133,7 @@ void CAgniAssembler::StripComments(char *pszSourceLine)
 }
 
 // Trim white space from left and right side...
-void CAgniAssembler::TrimWhiteSpace(char *pszSourceLine)
+void Assembler::TrimWhiteSpace(char *pszSourceLine)
 {
     // Variables...
     boolean bNewLineTerminated = false;
@@ -3186,7 +3196,7 @@ void CAgniAssembler::TrimWhiteSpace(char *pszSourceLine)
 }
 
 // Buffers bytes in memory, throw string on error...
-void CAgniAssembler::Write_BufferBytes(const void *pBuffer, size_t ulBytes)
+void Assembler::Write_BufferBytes(const void *pBuffer, size_t ulBytes)
 {
     // Variables...
     uint8 *pTemp = NULL;
@@ -3210,7 +3220,7 @@ void CAgniAssembler::Write_BufferBytes(const void *pBuffer, size_t ulBytes)
 }
 
 // Write executable to disk, throw string on error...
-void CAgniAssembler::WriteExecutable()
+void Assembler::WriteExecutable()
 {
     // Variables...
     char                            szBuffer[1024]              = {0};
@@ -3227,7 +3237,7 @@ void CAgniAssembler::WriteExecutable()
     uint8                           ucTemp                      = 0;
 
     // Be verbose...
-    ErrorVerbose("writing executable to `%s'", Parameters.szOutputFile);
+    ErrorVerbose("writing executable to `%s'", UserParameters.GetOutputFile().c_str());
 
     // Initialize final fields of Agni executable header...
 
@@ -3528,27 +3538,14 @@ void CAgniAssembler::WriteExecutable()
         // Establish output location...
 
             // Standard output device...
-            if(strcasecmp(Parameters.szOutputFile, "stdout") == 0)
+            if(UserParameters.GetOutputFile() == "stdout")
                 hOutput = stdout;
 
             // Disk file...
             else
             {
-                // Output file name is long enough to have an extension...
-                if(strlen(Parameters.szOutputFile) > strlen("." AGNI_FILE_EXTENSION_EXECUTABLE))
-                {
-                    // Seek to where it should be...
-                    pszTemp = Parameters.szOutputFile;
-                    pszTemp += strlen(Parameters.szOutputFile);
-                    pszTemp -= strlen("." AGNI_FILE_EXTENSION_EXECUTABLE);
-
-                    // Not found, add...
-                    if(strcasecmp(pszTemp, "." AGNI_FILE_EXTENSION_EXECUTABLE) != 0)
-                        strcat(Parameters.szOutputFile, "." AGNI_FILE_EXTENSION_EXECUTABLE);
-                }
-
                 // Open...
-                hOutput = fopen(Parameters.szOutputFile, "wb");
+                hOutput = fopen(UserParameters.GetOutputFile().c_str(), "wb");
 
                     // Failed...
                     if(!hOutput)
@@ -3571,7 +3568,7 @@ void CAgniAssembler::WriteExecutable()
 
             // Be verbose...
             ErrorVerbose("checksum 0x%08x (key 0x%08x)", unTempCheckSum,
-                         AGNI_CHECKSUM_KEY);
+                         unCheckSumKey);
 
         // Dump to output location and check for error...
         if(fwrite(pOutputBuffer, unOutputBufferAllocated, 1, hOutput) != 1)
@@ -3604,9 +3601,9 @@ void CAgniAssembler::WriteExecutable()
                 fclose(hOutput);
 
                 // Delete incomplete executable and warn on error...
-                if(remove(Parameters.szOutputFile) == -1)
+                if(remove(UserParameters.GetOutputFile().c_str()) == -1)
                     ErrorWarning("unable to delete corrupt `%s'",
-                                 Parameters.szOutputFile);
+                                 UserParameters.GetOutputFile().c_str());
             }
 
             // Output buffer allocated...
@@ -3624,9 +3621,255 @@ void CAgniAssembler::WriteExecutable()
 }
 
 // Deconstructor...
-CAgniAssembler::~CAgniAssembler()
+Assembler::~Assembler()
 {
     // Cleanup all resources, reset state, and shutdown assembler...
     ShutDown();
+}
+
+// Assembler parameters default constructor...
+Assembler::Parameters::Parameters()
+    : OptimizationLevel(0),
+      bVerbose(false)
+{
+
+}
+                   
+// Should we be verbose?
+bool Assembler::Parameters::BeVerbose() const
+{
+    // Return flag...
+    return bVerbose;
+}
+                    
+// Get the process name...
+std::string &Assembler::Parameters::GetProcessName() const
+{
+
+}
+
+// Get the input file name...
+std::string &Assembler::Parameters::GetInputFile() const
+{
+
+}
+
+// Get the optimization level...
+uint8 Assembler::Parameters::GetOptimizationLevel() const
+{
+    // Return it...
+    return OptimizationLevel;
+}
+
+// Get the output file name...
+std::string Assembler::Parameters::GetOutputFile() const
+{
+    // Return it...
+    return sOutputFile;
+}
+
+// Initialize from the command line automatically...
+bool Assembler::Parameters::ParseCommandLine(
+    int const nArguments,
+    char * const ppszArguments[])
+{
+    // Variables...
+    char    cOption                 = 0;
+    int     nOption                 = 0;
+    int     nTemp                   = 0;
+
+    // Extract AgniAssembler executable name...
+    sProcessName = ppszArguments[0];
+    
+        // Remove path...
+        nTemp = sProcessName.find_last_of("\\/");
+        if(nTemp != std::string::npos)
+            sProcessName.erase(0, nTemp);
+
+    // Parse command line until done...
+    for(nOption = 1; true; nOption++)
+    {
+        // Unused option index...
+        int nOptionIndex = 0;
+
+        // Declare valid command line options...
+        static struct option LongOptions[] =
+        {
+            // Help: No parameters...
+            {"help", no_argument, NULL, 'h'},
+
+            // Assemble: File name as mandatory parameter...
+            {"assemble", required_argument, NULL, 'a'},
+
+            // Optimization: Takes one mandatory parameter...
+            {"optimization", required_argument, NULL, 'O'},
+
+            // Output: File name as parameter...
+            {"output", required_argument, NULL, 'o'},
+
+            // Verbose: No parameters...
+            {"verbose", no_argument, NULL, 'V'},
+
+            // Version: No parameters...
+            {"version", no_argument, NULL, 'v'},
+
+            // End of parameter list...
+            {0, 0, 0, 0}
+        };
+
+        // Prevent getopt_long from printing to stderr...
+        opterr = 0;
+
+        // Grab an option...
+        cOption = getopt_long(nArguments, ppszArguments, "ha:O:o:Vv",
+                              LongOptions, &nOptionIndex);
+
+            // End of option list...
+            if(cOption== -1)
+            {
+                // No parameters were passed, display help...
+                if(nOption == 1)
+                    PrintHelp();
+
+                // Done parsing...
+                break;
+            }
+
+        // Process option...
+        switch(cOption)
+        {
+            // Assemble...
+            case 'a':
+
+                // Remember input file name...
+                sInputFile = optarg;
+
+                // Done...
+                break;
+
+            // Help...
+            case 'h':
+
+                // Display help...
+                PrintHelp();
+
+                // No more parsing necessary...
+                return false;
+
+            // Optimization...
+            case 'O':
+
+                // Remember optimization level...
+                OptimizationLevel = atoi(optarg);
+
+                // Done...
+                break;
+
+            // Output...
+            case 'o':
+
+                // Remember...
+                sOutputFile = optarg;
+
+                // Check to make sure contains proper file extension...
+                if(!sOutputFile.rfind("." AGNI_FILE_EXTENSION_EXECUTABLE, 
+                                      strlen("." AGNI_FILE_EXTENSION_EXECUTABLE)))
+                    sOutputFile += "." AGNI_FILE_EXTENSION_EXECUTABLE;
+
+                // Done...
+                break;
+
+            // Verbose...
+            case 'V':
+
+                // Remember...
+                bVerbose = true;
+
+                // Done...
+                break;
+
+            // Version...
+            case 'v':
+
+                // Display version...
+                PrintVersion();
+
+                // No more parsing necessary...
+                return false;
+
+            // Missing parameter or unrecognized switch...
+            case '?':
+            default:
+
+                // Unknown switch, alert...
+                std::cout << sProcessName << "\"" << optopt 
+                          << "\" unrecognized option" << std::endl;
+
+                // No more parsing necessary...
+                return false;
+        }
+    }
+
+    // Too many options...
+    if(optind < nArguments)
+    {
+        // List unknown parameters...
+        while(optind < nArguments)
+        {
+            // Display...
+            std::cout << sProcessName << ": option \"" 
+                      << ppszArguments[optind++] << "\" unknown" << std::endl;
+        }
+    }
+}
+
+// Print usage...
+void Assembler::Parameters::PrintHelp() const
+{
+    // Display help...
+    std::cout << 
+        "Usage: aa [option(s)] [input-file] [output-file]\n"
+        "Purpose: Provides AgniVirtualMachine backend to AgniCompiler...\n\n"
+        " Options:\n"
+        "  -a --assemble=<infile>       Input file\n"
+        "  -h --help                    Print this help message\n"
+        "  -O --optimization=<level>    Optimization level\n"
+        "  -o --output=<outfile>        Name output file\n"
+        "  -V --verbose                 Be verbose\n"
+        "  -v --version                 Print version information\n\n"
+        "  INFILE can be \"stdin\" or a file name. Default is \"stdin\".\n"
+        "  LEVEL can be an integer value from 0 (disabled) to 1.\n"
+        "  OUTFILE can be \"stdout\" or a file name. Default is \"stdout\".\n\n"
+
+        " Examples:\n"
+        "  aa -a MyAssemblyListing.agl -o MyGeneratedExecutable\n\n"
+
+        " AgniAssembler comes with NO WARRANTY, to the extent permitted by\n"
+        " law. You may redistribute copies of AgniAssembler. Just use your\n"
+        " head.\n\n"
+
+        " Shouts and thanks to Alex Varanese, MasterCAD, Curt, Dr. Knorr,\n"
+        " Dr. Wolfman, Dr. Eiselt, Peter (TDLSoftware.org), Reed, RP,\n"
+        " Sarah, Wayne, and the MinGW, GCC, Dev-C++, Code::Blocks, Gnome,\n"
+        " Winamp, and XMMS crews.\n\n"
+
+        " Written by Kip Warner. Questions or comments may be sent to\n"
+        " Kip@TheVertigo.com. You can visit me out on the wasteland at\n"
+        " http://TheVertigo.com." << std::endl << std::endl;
+}
+
+// Print version...
+void Assembler::Parameters::PrintVersion() const
+{
+    // Version...
+    std::cout << "AgniAssembler "   << AGNI_VERSION_MAJOR << "."
+                                    << AGNI_VERSION_MINOR << "svn"
+                                    << AGNI_VERSION_SVN << std::endl 
+                                    << std::endl
+              << "Compiler:\t"      << __VERSION__ << std::endl
+              << "Date:\t\t"        << __DATE__ << " at " << __TIME__ 
+                                    << std::endl
+              << "Platform:\t"      << HOST_TARGET << std::endl
+              << "Little Endian:\t" << Agni::bLittleEndian << std::endl;
 }
 

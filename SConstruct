@@ -28,7 +28,7 @@ else:
 
 # Build assembler...
 env.Program('aa', ['src/assembler/Main.cpp', 
-                   'src/assembler/CAgniAssembler.cpp'])
+                   'src/assembler/Assembler.cpp'])
 
 # Build compiler...
 env.Program('ac', ['src/compiler/Main.cpp',

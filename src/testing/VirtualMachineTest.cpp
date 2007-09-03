@@ -1,5 +1,5 @@
 /*
-  Name:         main.cpp
+  Name:         MachineTest.cpp
   Author:       Kip Warner
   Description:  Code to implement AgniDriver which tests the entire Agni
                 system. Link against libAgni.a with -lAgni added to your
@@ -8,11 +8,14 @@
 
 // Includes...
 #include "../include/CAgni.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
+#include <string>
+
+// Using the standard namespace...
+using namespace std;
 
 // Agni virtual machine instance...
-CAgni   Agni("AgniDriver", 1, 1);
+Agni::VirtualMachine    Machine("AgniDriver", 1, 1);
 
 // Print a string from a script...
 void PrintString(CAgni::Script hScript)
@@ -27,144 +30,144 @@ void PrintString(CAgni::Script hScript)
 
     // Print the string the requested number of times...
     while(nRepeat-- > 0)
-        printf("Thread %d: \"%s\"\n", hScript, pszString);
+        cout << "Thread " << hScript ": \"" pszString "\"" << endl;
 
     // Cleanup stack...
-    Agni.ReturnVoidFromHost(hScript, 2);
+    Machine.ReturnVoidFromHost(hScript, 2);
 }
 
 // Entry point...
 int main(int nArguments, char *ppszArguments[])
 {
     // Variables...
-    CAgni::Script   hScript = 0;
+    Agni::VirtualMachine::Script    hScript = 0;
     const char     *pszScriptPath =
-                    "/home/kip/Projects/Agni/trunk/dist/examples/Scripts/Random.age";
+                    "src/testing/scripts/Random.age";   
 
     // Greet user...
     printf("] AgniVirtualMachine initialized...\n");
 
     // Load a script...
     printf("] Loading \"%s\"\n] ", pszScriptPath);
-    switch(Agni.LoadScript(pszScriptPath, hScript))
+    switch(Machine.LoadScript(pszScriptPath, hScript))
     {
         // Loaded ok...
-        case CAgni::STATUS_OK:
+        case Agni::VirtualMachine::STATUS_OK:
 
             // Alert user...
-            puts("Load ok...");
+            cout << "Load ok..." << endl;
             break;
 
         // Cannot open...
-        case CAgni::STATUS_ERROR_CANNOT_OPEN:
+        case Agni::VirtualMachine::STATUS_ERROR_CANNOT_OPEN:
 
             // Alert user...
-            puts("Error: Cannot open...");
+            cout << "Error: Cannot open..." << endl;
             return 1;
 
         // Cannot assemble...
-        case CAgni::STATUS_ERROR_CANNOT_ASSEMBLE:
+        case Agni::VirtualMachine::STATUS_ERROR_CANNOT_ASSEMBLE:
 
             // Alert user...
-            puts("Error: Cannot assemble...");
+            cout << "Error: Cannot assemble..." << endl;
             return 1;
 
         // Cannot compile...
-        case CAgni::STATUS_ERROR_CANNOT_COMPILE:
+        case Agni::VirtualMachine::STATUS_ERROR_CANNOT_COMPILE:
 
             // Alert user...
-            puts("Error: Cannot compile...");
+            cout << "Error: Cannot compile..." << endl;
             return 1;
 
         // Memory allocation problem...
-        case CAgni::STATUS_ERROR_MEMORY_ALLOCATION:
+        case Agni::VirtualMachine::STATUS_ERROR_MEMORY_ALLOCATION:
 
             // Alert user...
-            puts("Error: Memory allocation problem...");
+            cout << "Error: Memory allocation problem..." << endl;
             return 1;
 
         // Threads exhausted...
-        case CAgni::STATUS_ERROR_THREADS_EXHAUSTED:
+        case Agni::VirtualMachine::STATUS_ERROR_THREADS_EXHAUSTED:
 
             // Alert user...
-            puts("Error: Too many concurrent threads...");
+            cout << "Error: Too many concurrent threads..." << endl;
             return 1;
 
         // Bad executable...
-        case CAgni::STATUS_ERROR_BAD_EXECUTABLE:
+        case Agni::VirtualMachine::STATUS_ERROR_BAD_EXECUTABLE:
 
             // Alert user...
-            puts("Error: Bad executable...");
+            cout << "Error: Bad executable..." << endl;
             return 1;
 
         // Bad checksum...
-        case CAgni::STATUS_ERROR_BAD_CHECKSUM:
+        case Agni::VirtualMachine::STATUS_ERROR_BAD_CHECKSUM:
 
             // Alert user...
-            puts("Error: Bad checksum...");
+            cout << "Error: Bad checksum..." << endl;
             return 1;
 
         // Old runtime...
-        case CAgni::STATUS_ERROR_OLD_AGNI_RUNTIME:
+        case Agni::VirtualMachine::STATUS_ERROR_OLD_AGNI_RUNTIME:
 
             // Alert user...
-            puts("Error: Old Agni runtime...");
+            cout << "Error: Old Agni runtime..." << endl;
             return 1;
 
         // Old host...
-        case CAgni::STATUS_ERROR_OLD_HOST:
+        case Agni::VirtualMachine::STATUS_ERROR_OLD_HOST:
 
             // Alert user...
-            puts("Error: Old host...");
+            cout << "Error: Old host..." << endl;
             return 1;
 
         // Wrong host...
-        case CAgni::STATUS_ERROR_WRONG_HOST:
+        case Agni::VirtualMachine::STATUS_ERROR_WRONG_HOST:
 
             // Alert user...
-            puts("Error: Wrong host...");
+            cout << "Error: Wrong host..." << endl;
             return 1;
     }
 
     // Register host provided function and check for error...
-    printf("] Registering host provided function...");
-    if(!Agni.RegisterHostProvidedFunction(hScript, "PrintString", PrintString))
+    printf("] Registering host provided function..." << endl;
+    if(!Machine.RegisterHostProvidedFunction(hScript, "PrintString", PrintString))
     {
         // Alert and abort...
-        puts("failed");
+        cout << "failed" << endl;
         return 1;
     }
 
         // Done...
-        puts("ok");
+        cout << "ok" << endl;
 
     // Start the script and check for error...
-    printf("] Starting script...");
+    printf("] Starting script..." << endl;
     if(!Agni.StartScript(hScript))
     {
         // Alert and abort...
-        puts("failed");
+        cout << "failed" << endl;
         return 1;
     }
 
         // Done...
-        puts("ok");
+        cout << "ok" << endl;
 
     // Call PrintRandomNumbers asynchronously...
-    printf("] Calling PrintRandomNumbers...\n");
-    Agni.CallFunction(hScript, "PrintRandomNumbers");
+    cout << "] Calling PrintRandomNumbers..." << endl;
+    Machine.CallFunction(hScript, "PrintRandomNumbers");
 
     /* Call TestStuff script function asynchronously...
     printf("] Calling TestStuff() script side function asynchronously...\n");
     if(!Agni.CallFunction(hScript, "TestStuff"))
     {
         // Alert and abort...
-        puts("failed");
+        cout << "failed" << endl;
         return 1;
     }
 
         // Done...
-        puts("ok");
+        cout << "ok" << endl;
 
     // Fetch return value...
     printf("] TestStuff returned the value %f\n",
@@ -175,7 +178,7 @@ int main(int nArguments, char *ppszArguments[])
     if(!Agni.CallFunctionSynchronously(hScript, "PrintLoop"))
     {
         // Alert and abort...
-        puts("failed");
+        cout << "failed" << endl;
         return 1;
     }
 
@@ -183,6 +186,6 @@ int main(int nArguments, char *ppszArguments[])
         Agni.RunScripts(50);*/
 
     // Done...
-    printf("] All done...\n");
+    cout << "] All done..." << endl;
     return 0;
 }

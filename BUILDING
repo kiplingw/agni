@@ -11,6 +11,11 @@ Building With SCons
 - Building everything:
     scons -Q [debug=0|1]
 
-  Building a component only (eg. assembler, compiler, etc):
+- Building a component only (eg. assembler, compiler, etc):
     scons -Q [aa|ac]
+
+- Running the test suite...
+
+    scons -Q
+    LD_LIBRARY_PATH=.:LD_LIBRARY_PATH ./avmtest
 
