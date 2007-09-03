@@ -9,6 +9,7 @@
 #include "Assembler.h"
 #include <getopt.h>
 #include <iostream>
+#include <cassert>
 
 // Using the Agni assembler namespace...
 using namespace Agni;
@@ -16,18 +17,18 @@ using namespace Agni;
 // Constructor...
 Assembler::Assembler(Parameters &_UserParameters)
     :   UserParameters(_UserParameters),
-        usInstructionCount(0),
         ppszListing(NULL),
         unListingLines(0),
+        usInstructionCount(0),
         pInstructionStream(NULL),
         LexerState(LEXER_NO_STRING),
         unLexerIndex0(0),
         unLexerIndex1(0),
         unLexerLine(0),
         unLexerCurrentToken(TOKEN_INVALID),
-        unTempCheckSum(0),
         unOutputBufferAllocated(0),
-        pOutputBuffer(NULL)
+        pOutputBuffer(NULL),
+        unTempCheckSum(0)
 {
     // Variables...
     unsigned int unInstructionIndex = 0;
@@ -478,11 +479,8 @@ int32 Assembler::AddInstruction(const char *pszMnemonic,
                                 uint8 OperandCount)
 {
     // Ensure we haven't run out of instruction indices...
-    if(usInstructionCount >= (sizeof(InstructionTable) /
-                              sizeof(AA_InstructionLookup)))
-    {
-        // FIXME (kip#1#): Think of something appropriate to do here.
-    }
+    assert(usInstructionCount < 
+           (sizeof(InstructionTable) / sizeof(AA_InstructionLookup)));
 
     // Store mnemonic...
     strncpy(InstructionTable[usInstructionCount].szMnemonic, pszMnemonic,
@@ -637,7 +635,7 @@ boolean Assembler::Assemble()
         }
 
         // No output file specified...
-        if(!UserParameters.GetOutputFile().empty())
+        if(UserParameters.GetOutputFile().empty())
         {
             // Abort...
             ErrorGeneral("no output file specified");
@@ -1282,7 +1280,7 @@ boolean Assembler::Assemble()
                         SupportedOperandType
                                 = CurrentInstruction.pOperandList[nCurrentOperandIndex];
 
-                        // Store the listing's operand...
+                        // Store the instruction's operand...
                         InitialOperandToken = GetNextToken();
 
                         // Process operand...
@@ -2035,9 +2033,7 @@ boolean Assembler::GetInstructionByMnemonic(
     uint16  usIndex= 0;
 
     // Iterate through instruction lookup table...
-    for(usIndex = 0;
-        usIndex < (sizeof(InstructionTable) / sizeof(AA_InstructionLookup));
-        usIndex++)
+    for(usIndex = 0; usIndex < usInstructionCount; usIndex++)
     {
         // Found...
         if(strcasecmp(InstructionTable[usIndex].szMnemonic, pszMnemonic) == 0)
@@ -3225,7 +3221,6 @@ void Assembler::WriteExecutable()
     // Variables...
     char                            szBuffer[1024]              = {0};
     FILE                           *hOutput                     = NULL;
-    char                           *pszTemp                     = NULL;
     uint32                          unInstructionIndex          = 0;
     uint32                          unOperandIndex              = 0;
     Agni_StringStreamHeader         StringStreamHeader;
@@ -3643,26 +3638,28 @@ bool Assembler::Parameters::BeVerbose() const
 }
                     
 // Get the process name...
-std::string &Assembler::Parameters::GetProcessName() const
+std::string const &Assembler::Parameters::GetProcessName() const
 {
-
+    // Return it...
+    return sProcessName;
 }
 
 // Get the input file name...
-std::string &Assembler::Parameters::GetInputFile() const
+std::string const &Assembler::Parameters::GetInputFile() const
 {
-
+    // Return it...
+    return sInputFile;
 }
 
 // Get the optimization level...
-uint8 Assembler::Parameters::GetOptimizationLevel() const
+uint8 const Assembler::Parameters::GetOptimizationLevel() const
 {
     // Return it...
     return OptimizationLevel;
 }
 
 // Get the output file name...
-std::string Assembler::Parameters::GetOutputFile() const
+std::string const &Assembler::Parameters::GetOutputFile() const
 {
     // Return it...
     return sOutputFile;
@@ -3674,17 +3671,16 @@ bool Assembler::Parameters::ParseCommandLine(
     char * const ppszArguments[])
 {
     // Variables...
-    char    cOption                 = 0;
-    int     nOption                 = 0;
-    int     nTemp                   = 0;
+    char    cOption = 0;
+    int     nOption = 0;
+    int     nTemp   = 0;
 
     // Extract AgniAssembler executable name...
     sProcessName = ppszArguments[0];
     
         // Remove path...
-        nTemp = sProcessName.find_last_of("\\/");
-        if(nTemp != std::string::npos)
-            sProcessName.erase(0, nTemp);
+        if(sProcessName.find_last_of("\\/") != std::string::npos)
+            sProcessName.erase(0, sProcessName.find_last_of("\\/") + 1);
 
     // Parse command line until done...
     for(nOption = 1; true; nOption++)
@@ -3768,13 +3764,20 @@ bool Assembler::Parameters::ParseCommandLine(
             // Output...
             case 'o':
 
+                // Extension length...
+                nTemp = strlen("." AGNI_FILE_EXTENSION_EXECUTABLE);
+
                 // Remember...
                 sOutputFile = optarg;
 
                 // Check to make sure contains proper file extension...
-                if(!sOutputFile.rfind("." AGNI_FILE_EXTENSION_EXECUTABLE, 
-                                      strlen("." AGNI_FILE_EXTENSION_EXECUTABLE)))
+                if(sOutputFile.rfind("." AGNI_FILE_EXTENSION_EXECUTABLE, 
+                                      sOutputFile.length() - 1, nTemp) ==
+                   std::string::npos)
+                {
+                    // Append it then...
                     sOutputFile += "." AGNI_FILE_EXTENSION_EXECUTABLE;
+                }
 
                 // Done...
                 break;
@@ -3820,7 +3823,13 @@ bool Assembler::Parameters::ParseCommandLine(
             std::cout << sProcessName << ": option \"" 
                       << ppszArguments[optind++] << "\" unknown" << std::endl;
         }
+        
+        // No more parsing should be done...
+        return false;
     }
+    
+    // Recommend ok to continue with assembly...
+    return true;
 }
 
 // Print usage...

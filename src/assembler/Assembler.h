@@ -59,25 +59,25 @@ namespace Agni
                     // Accessors...
                         
                         // Should we be verbose?
-                        bool            BeVerbose() const;
+                        bool                BeVerbose() const;
                         
                         // Get the process name...
-                        std::string    &GetProcessName() const;
+                        std::string const  &GetProcessName() const;
                         
                         // Get the input file name...
-                        std::string    &GetInputFile() const;
+                        std::string const  &GetInputFile() const;
                         
                         // Get the optimization level...
-                        uint8           GetOptimizationLevel() const;
+                        uint8 const         GetOptimizationLevel() const;
                         
                         // Get the output file name...
-                        std::string     GetOutputFile() const;
+                        std::string const  &GetOutputFile() const;
                         
                         // Print out the help...
-                        void            PrintHelp() const;
+                        void                PrintHelp() const;
                         
                         // Print out the version...
-                        void            PrintVersion() const;
+                        void                PrintVersion() const;
                     
                     // Mutators...
                     

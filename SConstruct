@@ -17,7 +17,8 @@ VERSION_SVN     = os.popen('echo -n `LANG=C svn info | grep ^Revision | cut -d\ 
 # Common flags...
 env.Append(CPPFLAGS = '-DAGNI_VERSION_MAJOR=' + str(VERSION_MAJOR) + " " \
                       '-DAGNI_VERSION_MINOR=' + str(VERSION_MINOR) + " " \
-                      '-DAGNI_VERSION_SVN=' + str(VERSION_SVN) + " ")
+                      '-DAGNI_VERSION_SVN=' + str(VERSION_SVN) + 
+                      " -Wall -Werror ")
 
 # Debugging enabled?
 debug = ARGUMENTS.get('debug', 1)
