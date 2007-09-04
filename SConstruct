@@ -40,7 +40,7 @@ env.Program('ac', ['src/compiler/Main.cpp',
                    'src/compiler/CPreProcessor.cpp'])
 
 # Build virtual machine...
-env.SharedLibrary('agni', 'src/virtualmachine/CAgni.cpp')
+env.SharedLibrary('agni', 'src/virtualmachine/VirtualMachine.cpp')
 
 # Build virtual machine test...
 env.Program('avmtest', 

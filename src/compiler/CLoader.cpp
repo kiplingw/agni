@@ -7,6 +7,9 @@
 // Includes...
 #include "CLoader.h"
 
+// Using the Agni namespace...
+using namespace Agni;
+
 // Default constructor...
 CLoader::CLoader(const string sInputFileName)
     : sFileName(sInputFileName)

@@ -13,64 +13,60 @@ using namespace Agni;
 
 // Initialize static arrays...
 
-    // Operator state tables...
+    /*  Notes: The second column is the offset into the succeeding state table
+               that the operator's state might transition into. The third 
+               column is the number of valid operator states in the succeeding 
+               state table. If the second and third column members are both 
+               zero, that entry represents a terminal state eg. +=, -=, et 
+               cetera. DO NOT CHANGE THE ORDER OF EACH MEMBER IN EACH STATE 
+               TABLE, as this compromises the state transition since they are 
+               dependent on the substate ordinals... */
 
-        /*  Notes: The second column is the offset into the succeeding
-                    state table that the operator's state might
-                    transition into. The third column is the number
-                    of valid operator states in the succeeding state
-                    table. If the second and third column members are
-                    both zero, that entry represents a terminal state
-                    eg. +=, -=, et cetera. DO NOT CHANGE THE ORDER
-                    OF EACH MEMBER IN EACH STATE TABLE, as this
-                    compromises the state transition since they are
-                    dependent on the substate ordinals... */
+    // First operator state transition table...
+    const CLexer::OperatorState CLexer::OperatorStates_0[MAXIMUM_OPERATOR_STATES]
+        = {{'+', 0, 2,  OPERATOR_ADD},                              // +
+            {'-', 2, 2,  OPERATOR_SUBTRACT},                         // -
+            {'*', 4, 1,  OPERATOR_MULTIPLY},                         // *
+            {'/', 5, 1,  OPERATOR_DIVIDE},                           // /
+            {'%', 6, 1,  OPERATOR_MODULUS},                          // %
+            {'^', 7, 1,  OPERATOR_EXPONENT},                         // ^
+            {'&', 8, 2,  OPERATOR_BITWISE_AND},                      // &
+            {'|', 10, 2, OPERATOR_BITWISE_OR},                       // |
+            {'#', 12, 1, OPERATOR_BITWISE_XOR},                      // #
+            {'~', 0, 0,  OPERATOR_BITWISE_NOT},                      // ~
+            {'!', 13, 1, OPERATOR_LOGICAL_NOT},                      // !
+            {'=', 14, 1, OPERATOR_ASSIGNMENT},                       // =
+            {'<', 15, 2, OPERATOR_RELATIONAL_LESS},                  // <
+            {'>', 17, 2, OPERATOR_RELATIONAL_GREATER},               // >
+            {'$', 19, 1, OPERATOR_CONCATENATE}};                     // $
 
-                // First state table...
-                const CLexer::OperatorState CLexer::OperatorStates_0[MAXIMUM_OPERATOR_STATES]
-                    = {{'+', 0, 2,  OPERATOR_ADD},                              // +
-                       {'-', 2, 2,  OPERATOR_SUBTRACT},                         // -
-                       {'*', 4, 1,  OPERATOR_MULTIPLY},                         // *
-                       {'/', 5, 1,  OPERATOR_DIVIDE},                           // /
-                       {'%', 6, 1,  OPERATOR_MODULUS},                          // %
-                       {'^', 7, 1,  OPERATOR_EXPONENT},                         // ^
-                       {'&', 8, 2,  OPERATOR_BITWISE_AND},                      // &
-                       {'|', 10, 2, OPERATOR_BITWISE_OR},                       // |
-                       {'#', 12, 1, OPERATOR_BITWISE_XOR},                      // #
-                       {'~', 0, 0,  OPERATOR_BITWISE_NOT},                      // ~
-                       {'!', 13, 1, OPERATOR_LOGICAL_NOT},                      // !
-                       {'=', 14, 1, OPERATOR_ASSIGNMENT},                       // =
-                       {'<', 15, 2, OPERATOR_RELATIONAL_LESS},                  // <
-                       {'>', 17, 2, OPERATOR_RELATIONAL_GREATER},               // >
-                       {'$', 19, 1, OPERATOR_CONCATENATE}};                     // $
+    // Second operator state transition table...
+    const CLexer::OperatorState CLexer::OperatorStates_1[MAXIMUM_OPERATOR_STATES]
+        = {{'=', 0, 0, OPERATOR_ASSIGNMENT_ADD},                    // +=
+            {'+', 0, 0, OPERATOR_INCREMENT},                         // ++
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_SUBTRACT},               // -=
+            {'-', 0, 0, OPERATOR_DECREMENT},                         // --
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_MULTIPLY},               // *=
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_DIVIDE},                 // /=
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_MODULUS},                // %=
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_EXPONENT},               // ^=
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_AND},            // &=
+            {'&', 0, 0, OPERATOR_LOGICAL_AND},                       // &&
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_OR},             // |=
+            {'|', 0, 0, OPERATOR_LOGICAL_OR},                        // ||
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_XOR},            // #=
+            {'=', 0, 0, OPERATOR_RELATIONAL_NOT_EQUAL},              // !=
+            {'=', 0, 0, OPERATOR_RELATIONAL_EQUAL},                  // ==
+            {'=', 0, 0, OPERATOR_RELATIONAL_LESS_OR_EQUAL},          // <=
+            {'<', 0, 1, OPERATOR_BITWISE_SHIFT_LEFT},                // <<
+            {'=', 0, 0, OPERATOR_RELATIONAL_GREATER_OR_EQUAL},       // >=
+            {'>', 1, 1, OPERATOR_BITWISE_SHIFT_RIGHT},               // >>
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_CONCATENATE}};           // $=
 
-                // Second state table...
-                const CLexer::OperatorState CLexer::OperatorStates_1[MAXIMUM_OPERATOR_STATES]
-                    = {{'=', 0, 0, OPERATOR_ASSIGNMENT_ADD},                    // +=
-                       {'+', 0, 0, OPERATOR_INCREMENT},                         // ++
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_SUBTRACT},               // -=
-                       {'-', 0, 0, OPERATOR_DECREMENT},                         // --
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_MULTIPLY},               // *=
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_DIVIDE},                 // /=
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_MODULUS},                // %=
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_EXPONENT},               // ^=
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_AND},            // &=
-                       {'&', 0, 0, OPERATOR_LOGICAL_AND},                       // &&
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_OR},             // |=
-                       {'|', 0, 0, OPERATOR_LOGICAL_OR},                        // ||
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_XOR},            // #=
-                       {'=', 0, 0, OPERATOR_RELATIONAL_NOT_EQUAL},              // !=
-                       {'=', 0, 0, OPERATOR_RELATIONAL_EQUAL},                  // ==
-                       {'=', 0, 0, OPERATOR_RELATIONAL_LESS_OR_EQUAL},          // <=
-                       {'<', 0, 1, OPERATOR_BITWISE_SHIFT_LEFT},                // <<
-                       {'=', 0, 0, OPERATOR_RELATIONAL_GREATER_OR_EQUAL},       // >=
-                       {'>', 1, 1, OPERATOR_BITWISE_SHIFT_RIGHT},               // >>
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_CONCATENATE}};           // $=
-
-                // Third state table...
-                const CLexer::OperatorState CLexer::OperatorStates_2[MAXIMUM_OPERATOR_STATES]
-                    = {{'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_SHIFT_LEFT},     // <<=
-                       {'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_SHIFT_RIGHT}};   // >>=
+    // Third operator state transition table...
+    const CLexer::OperatorState CLexer::OperatorStates_2[MAXIMUM_OPERATOR_STATES]
+        = {{'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_SHIFT_LEFT},     // <<=
+            {'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_SHIFT_RIGHT}};   // >>=
 
 // Create a lexer from a source code vector...
 CLexer::CLexer(const vector<string> &UserSourceCode)

@@ -59,7 +59,7 @@ namespace Agni
                     // Accessors...
                         
                         // Should we be verbose?
-                        bool                BeVerbose() const;
+                        bool                ShouldBeVerbose() const;
                         
                         // Get the process name...
                         std::string const  &GetProcessName() const;

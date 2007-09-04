@@ -8,6 +8,9 @@
 // Includes...
 #include "CPreProcessor.h"
 
+// Use the Agni namespace...
+using namespace Agni;
+
 // Default constructor...
 CPreProcessor::CPreProcessor(const string sInputRootPath, 
                              const list<string> InputSourceCodeLinkedList)

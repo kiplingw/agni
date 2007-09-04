@@ -430,17 +430,17 @@ Assembler::Assembler(Parameters &_UserParameters)
     // Be verbose...
     ErrorVerbose("loaded assembler settings");
     ErrorVerbose("settings->assembler: `%s'", 
-                 UserParameters.GetProcessName().c_str());
+        UserParameters.GetProcessName().c_str());
     ErrorVerbose("settings->input: `%s'", 
-                 UserParameters.GetInputFile().c_str());
+        UserParameters.GetInputFile().c_str());
     ErrorVerbose("settings->optimization: %d", 
-                 UserParameters.GetOptimizationLevel());
+        UserParameters.GetOptimizationLevel());
     ErrorVerbose("settings->output: `%s'", 
-                 UserParameters.GetOutputFile().c_str());
-    ErrorVerbose("settings->verbose: %s", UserParameters.BeVerbose() ? "true"
-                                                                     : "false");
+        UserParameters.GetOutputFile().c_str());
+    ErrorVerbose("settings->verbose: %s", 
+        UserParameters.ShouldBeVerbose() ? "true" : "false");
     ErrorVerbose("initialized instruction set table with %d instructions",
-                 GetInstructionSetSize());
+        GetInstructionSetSize());
 }
 
 // Add function and return index, or -1 on error...
@@ -1704,7 +1704,7 @@ boolean Assembler::Assemble()
     ErrorVerbose("assembly complete");
 
     // Display statistics, if verbose mode enabled...
-    if(UserParameters.BeVerbose())
+    if(UserParameters.ShouldBeVerbose())
         DisplayStatistics();
 
     // Done...
@@ -1925,7 +1925,7 @@ void Assembler::ErrorVerbose(const char *pszFormat, ...)
     char    szBuffer[1024]  = {0};
 
     // Verbose mode not enabled, ignore...
-    if(!UserParameters.BeVerbose())
+    if(!UserParameters.ShouldBeVerbose())
         return;
 
     // Output is standard output device, ignore to avoid corruption...
@@ -3629,13 +3629,6 @@ Assembler::Parameters::Parameters()
 {
 
 }
-                   
-// Should we be verbose?
-bool Assembler::Parameters::BeVerbose() const
-{
-    // Return flag...
-    return bVerbose;
-}
                     
 // Get the process name...
 std::string const &Assembler::Parameters::GetProcessName() const
@@ -3772,7 +3765,7 @@ bool Assembler::Parameters::ParseCommandLine(
 
                 // Check to make sure contains proper file extension...
                 if(sOutputFile.rfind("." AGNI_FILE_EXTENSION_EXECUTABLE, 
-                                      sOutputFile.length() - 1, nTemp) ==
+                                     sOutputFile.length() - 1, nTemp) ==
                    std::string::npos)
                 {
                     // Append it then...
@@ -3880,5 +3873,12 @@ void Assembler::Parameters::PrintVersion() const
                                     << std::endl
               << "Platform:\t"      << HOST_TARGET << std::endl
               << "Little Endian:\t" << Agni::bLittleEndian << std::endl;
+}
+
+// Should we be verbose?
+bool Assembler::Parameters::ShouldBeVerbose() const
+{
+    // Return flag...
+    return bVerbose;
 }
 
