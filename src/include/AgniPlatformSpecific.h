@@ -79,7 +79,7 @@
             // Functions...
 
                 // Get the current time in milliseconds...
-                #define GetMilliSeconds()    \
+                #define GetSystemMilliSeconds()    \
                     ::times(NULL) * 1000 / ::sysconf(_SC_CLK_TCK)
         }
 
@@ -116,7 +116,7 @@
             // Functions...
 
                 // Get the current time in clock ticks...
-                #define GetMilliSeconds() \
+                #define GetSystemMilliSeconds() \
                     ::GetTickCount()
         }
 

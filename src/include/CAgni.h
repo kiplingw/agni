@@ -1,13 +1,13 @@
 /*
-  Name:         CAgni.h (definition)
+  Name:         Agni.h (definition)
   Copyright:    Kip Warner (Kip@TheVertigo.com)
-  Description:  AgniVirtualMachine. You need to link against libAgni.a to use
-                this (add -lAgni to command line, if using gcc)...
+  Description:  Virtual machine. You need to link against libagni.a to use
+                this (add -lagni to command line, if using gcc)...
 */
 
 // Multiple include protection...
-#if !defined(_CAGNI_H_)
-#define _CAGNI_H_
+#if !defined(_AGNI_H_)
+#define _AGNI_H_
 
 // To-do...
 
@@ -15,6 +15,9 @@
 
     // Data types...
     #include "AgniPlatformSpecific.h"
+
+    // Common structures...
+    #include "AgniCommonDefinitions.h"
 
     // File I/O...
     #include <stdio.h>
@@ -28,485 +31,486 @@
     // Exponentiation, trigonometric, and other miscellaneous math routines...
     #include <math.h>
 
-// CAgni virtual machine class definition...
-class CAgni
+// Within the Agni namespace...
+namespace Agni
 {
-    // Public macros and data types...
-    public:
+    // Virtual machine class definition...
+    class VirtualMachine
+    {
+        // Public macros and data types...
+        public:
 
-        // Status codes...
-        enum STATUS
-        {
-            STATUS_OK = 0,
-            STATUS_ERROR_CANNOT_OPEN,
-            STATUS_ERROR_CANNOT_ASSEMBLE,
-            STATUS_ERROR_CANNOT_COMPILE,
-            STATUS_ERROR_MEMORY_ALLOCATION,
-            STATUS_ERROR_THREADS_EXHAUSTED,
-            STATUS_ERROR_BAD_EXECUTABLE,
-            STATUS_ERROR_BAD_CHECKSUM,
-            STATUS_ERROR_OLD_AGNI_RUNTIME,
-            STATUS_ERROR_OLD_HOST,
-            STATUS_ERROR_WRONG_HOST
-        };
-
-        // Script execution exceptions...
-        enum SCRIPT_EXECUTION_EXCEPTION
-        {
-            SCRIPT_EXECUTION_EXCEPTION_STACK_UNDERFLOW = 0,
-            SCRIPT_EXECUTION_EXCEPTION_STACK_OVERFLOW
-        };
-
-        // Script handle...
-        typedef uint32 Script;
-
-        // Host provided function signature...
-        typedef void (HostProvidedFunction)(Script hScript);
-
-        // Global host function flag...
-        #define GLOBAL_HOST_FUNCTION -1
-
-    // Public API methods...
-    public:
-
-        // Constructor initializes runtime enviroment...
-        CAgni(char *_pszHostName, uint8 _HostVersionMajor,
-              uint8 _HostVersionMinor);
-
-        // Script function calling...
-
-            // Call script function asynchronously... (blocking)
-            boolean CallFunction(Script hScript, char *pszName);
-
-            // Call script function synchronously... (non-blocking)
-            boolean CallFunctionSynchronously(Script hScript, char *pszName);
-
-            // Pass float parameter...
-            boolean PassFloatParameter(Script hScript, float fValue);
-
-            // Pass integer parameter...
-            boolean PassIntegerParameter(Script hScript, int nValue);
-
-            // Pass string parameter...
-            boolean PassStringParameter(Script hScript, char *pszValue);
-
-        // Script parameter retrieval for when script invokes host function...
-
-            // Get passed parameter as an integer...
-            int     GetParameterAsInteger(Script hScript, uint8 unParameter);
-
-            // Get passed parameter as a float...
-            float   GetParameterAsFloat(Script hScript, uint8 unParameter);
-
-            // Get passed parameter as a string...
-            char   *GetParameterAsString(Script hScript, uint8 unParameter);
-
-        // Script function return value reading...
-
-            // Get return as a float from an asynchronous call...
-            float   GetReturnValueAsFloat(Script hScript);
-
-            // Get return as an integer from an asynchronous call...
-            int     GetReturnValueAsInteger(Script hScript);
-
-            // Get return as a string from an asynchronous call...
-            char   *GetReturnValueAsString(Script hScript, char *pszBuffer,
-                                           uint32 unBufferSize);
-
-        // Script general loading, unloading, and querying...
-
-            // Load script, store handle, return a status code...
-            STATUS LoadScript(const char *pszPath, Script &hScript);
-
-            // Unload script...
-            boolean UnloadScript(Script &hScript);
-
-        // Script playback...
-
-            // Pause a script for a certain duration...
-            boolean PauseScript(Script hScript, uint32 unDuration);
-
-            // Reset script...
-            boolean ResetScript(Script hScript);
-
-            // Run scripts for specified milliseconds, or use macros...
-            boolean RunScripts(uint32 unDuration);
-
-            // Start the execution of a script...
-            boolean StartScript(Script hScript);
-
-            // Stop the execution of a script...
-            boolean StopScript(Script hScript);
-
-            // Unpause a script...
-            boolean UnPauseScript(Script hScript);
-
-        // Host provided function methods...
-
-            // Register host provided function...
-            bool RegisterHostProvidedFunction(
-                                Script hThread, const char *pszName,
-                                HostProvidedFunction *pHostProvidedFunction);
-
-        // Methods to be called from within a script called host function...
-
-            // Return nothing from within host function...
-            void ReturnVoidFromHost(Script hScript, uint8 unParameters);
-
-            // Return an integer from within host function...
-            void ReturnIntegerFromHost(Script hScript, uint8 unParameters,
-                                       int nReturnValue);
-
-            // Return a float from within host function...
-            void ReturnFloatFromHost(Script hScript, uint8 unParameters,
-                                     float fReturnValue);
-
-            // Return a string from within a host function...
-            void ReturnStringFromHost(Script hScript, uint8 unParameters,
-                                      char *pszReturnValue);
-
-        // Deconstructor shuts down runtime enviroment...
-       ~CAgni();
-
-    // Protected data types, macros, and other miscellaneous things...
-    protected:
-
-        // Common structures...
-        #include "AgniCommonDefinitions.h"
-
-        // Host provided function...
-        typedef struct _AVM_HostProvidedFunction
-        {
-            // Host function loaded flag...
-            boolean                 bLoaded;
-
-            // Script this function is visible to...
-            Script                  hScriptVisibleTo;
-
-            // Function name...
-            char                    szName[256];
-
-            // Host routine's entry point...
-            HostProvidedFunction   *pEntryPoint;
-
-        }AVM_HostProvidedFunction;
-
-        // Runtime value... (used in stack, registers, and instruction stream)
-        typedef struct _AVM_RuntimeValue
-        {
-            // Operand type...
-            uint8           OperandType;
-
-            // Operand...
-            union
+            // Status codes...
+            enum Status
             {
-                // Literal integer...
-                int32           nLiteralInteger;
-
-                // Literal float...
-                float32         fLiteralFloat;
-
-                // String literal...
-                char           *pszLiteralString;
-
-                // Stack index... (second element needed only with relative
-                //  stack indices to store offset)
-                int32           nStackIndex[2];
-
-                // Instruction index...
-                int32           nInstructionIndex;
-
-                // Function index...
-                int32           nFunctionIndex;
-
-                // Host function index...
-                int32           nHostFunctionIndex;
-
-                // Register identifier...
-                uint8           Register;
+                Ok = 0,
+                Cannot_Open,
+                Cannot_Assemble,
+                Cannot_Compile,
+                Memory_Allocation,
+                Threads_Exhausted,
+                Bad_Executable,
+                Bad_CheckSum,
+                Old_Agni_Runtime,
+                Old_Host_Runtime,
+                Wrong_Host
             };
 
-        }AVM_RuntimeValue;
+            // Script execution exceptions...
+            enum SCRIPT_EXECUTION_EXCEPTION
+            {
+                SCRIPT_EXECUTION_EXCEPTION_STACK_UNDERFLOW = 0,
+                SCRIPT_EXECUTION_EXCEPTION_STACK_OVERFLOW
+            };
 
-        // Instruction structure...
-        typedef struct _AVM_Instruction
-        {
-            // Operation code...
-            uint16              usOperationCode;
+            // Script handle...
+            typedef uint32 Script;
 
-            // Operand count...
-            uint8               OperandCount;
+            // Host provided function signature...
+            typedef void (HostProvidedFunction)(Script hScript);
 
-            // Operand list...
-            AVM_RuntimeValue   *pOperandList;
+            // Global host function flag...
+            #define GLOBAL_HOST_FUNCTION -1
 
-        }AVM_Instruction;
+        // Public API methods...
+        public:
 
-        // Instruction stream structure...
-        typedef struct _AVM_InstructionStream
-        {
-            // The instruction stream itself...
-            AVM_Instruction    *pInstructions;
+            // Constructor initializes runtime enviroment...
+            VirtualMachine(char *_pszHostName, uint8 _HostVersionMajor,
+                           uint8 _HostVersionMinor);
 
-            // Instruction pointer...
-            uint32              unInstructionPointer;
+            // Script function calling...
 
-        }AVM_InstructionStream;
+                // Call script function asynchronously... (blocking)
+                boolean CallFunction(Script hScript, char *pszName);
 
-        // Runtime stack structure...
-        typedef struct _AVM_RuntimeStack
-        {
-            // Stack elements...
-            AVM_RuntimeValue   *pElements;
+                // Call script function synchronously... (non-blocking)
+                boolean CallFunctionSynchronously(Script hScript, char *pszName);
 
-            // Top index...
-            int32               nTopIndex;
+                // Pass float parameter...
+                boolean PassFloatParameter(Script hScript, float fValue);
 
-            // Index of the top of the current stack frame...
-            uint32              unCurrentStackFrameTopIndex;
+                // Pass integer parameter...
+                boolean PassIntegerParameter(Script hScript, int nValue);
 
-        }AVM_RuntimeStack;
+                // Pass string parameter...
+                boolean PassStringParameter(Script hScript, char *pszValue);
 
-        // Script structure...
-        typedef struct _AVM_Script
-        {
-            // Is this script loaded?
-            boolean                         bLoaded;
+            // Script parameter retrieval for when script invokes host function...
 
-            // Is it executing?
-            boolean                         bExecuting;
+                // Get passed parameter as an integer...
+                int     GetParameterAsInteger(Script hScript, uint8 unParameter);
 
-            // Main header...
-            Agni_MainHeader                 MainHeader;
+                // Get passed parameter as a float...
+                float   GetParameterAsFloat(Script hScript, uint8 unParameter);
 
-            // Instruction stream header...
-            Agni_InstructionStreamHeader    InstructionStreamHeader;
+                // Get passed parameter as a string...
+                char   *GetParameterAsString(Script hScript, uint8 unParameter);
 
-            // Instruction stream...
-            AVM_InstructionStream           InstructionStream;
+            // Script function return value reading...
 
-            // String stream header...
-            Agni_StringStreamHeader         StringStreamHeader;
+                // Get return as a float from an asynchronous call...
+                float   GetReturnValueAsFloat(Script hScript);
 
-            // Function table header...
-            Agni_FunctionTableHeader        FunctionTableHeader;
+                // Get return as an integer from an asynchronous call...
+                int     GetReturnValueAsInteger(Script hScript);
 
-            // Function table...
-            Agni_Function                  *pFunctionTable;
+                // Get return as a string from an asynchronous call...
+                char   *GetReturnValueAsString(Script hScript, char *pszBuffer,
+                                               uint32 unBufferSize);
 
-            // Host function table header...
-            Agni_HostFunctionTableHeader    HostFunctionTableHeader;
+            // Script general loading, unloading, and querying...
 
-            // Host function table...
-            Agni_HostFunction              *pHostFunctionTable;
+                // Load script, store handle, return a status code...
+                Status LoadScript(const char *pszPath, Script &hScript);
 
-            // Paused, and if so, until what time?
-            boolean                         bPaused;
-            uint32                          unPauseEndTime;
+                // Unload script...
+                boolean UnloadScript(Script &hScript);
 
-            // Thread time slice...
-            uint32                          unThreadTimeSlice;
+            // Script playback...
 
-            // Registers...
-            
-                // General purpose...
-                AVM_RuntimeValue            _RegisterT0;
-                AVM_RuntimeValue            _RegisterT1;
+                // Pause a script for a certain duration...
+                boolean PauseScript(Script hScript, uint32 unDuration);
 
-                // Return...
-                AVM_RuntimeValue            _RegisterReturn;
+                // Reset script...
+                boolean ResetScript(Script hScript);
 
-            // Runtime stack...
-            AVM_RuntimeStack                Stack;
+                // Run scripts for specified milliseconds, or use macros...
+                boolean RunScripts(uint32 unDuration);
 
-        }AVM_Script;
+                // Start the execution of a script...
+                boolean StartScript(Script hScript);
 
-        // Default stack size...
-        #define DEFAULT_STACK_SIZE              1024
+                // Stop the execution of a script...
+                boolean StopScript(Script hScript);
 
-        // Maximum string coercion length...
-        #define MAXIMUM_COERCION_LENGTH         63
+                // Unpause a script...
+                boolean UnPauseScript(Script hScript);
 
-        // Maximum number of threads...
-        #define MAXIMUM_THREADS                 1024
+            // Host provided function methods...
 
-        // Maximum number of host provided functions...
-        #define MAXIMUM_HOST_PROVIDED_FUNCTIONS 256
+                // Register host provided function...
+                bool RegisterHostProvidedFunction(
+                                    Script hThread, const char *pszName,
+                                    HostProvidedFunction *pHostProvidedFunction);
 
-        // Threading modes...
-        enum THREADING_MODE
-        {
-            THREADING_MODE_MULTIPLE = 0,
-            THREADING_MODE_SINGLE
-        };
+            // Methods to be called from within a script called host function...
 
-        // Threading priority time slice durations...
-        enum THREAD_PRIORITY_DURATION
-        {
-            THREAD_PRIORITY_LOW_DURATION    = 20,
-            THREAD_PRIORITY_MEDIUM_DURATION = 40,
-            THREAD_PRIORITY_HIGH_DURATION   = 80
-        };
+                // Return nothing from within host function...
+                void ReturnVoidFromHost(Script hScript, uint8 unParameters);
 
-        // Resolve stack index for current thread if relative to absolute...
-        #define ResolveStackIndex(hScript, nIndex) \
-            (nIndex < 0 ? nIndex += Scripts[hScript].Stack. \
-                unCurrentStackFrameTopIndex  : nIndex)
+                // Return an integer from within host function...
+                void ReturnIntegerFromHost(Script hScript, uint8 unParameters,
+                                           int nReturnValue);
 
-        // Is thread a valid index and loaded?
-        #define IsValidThread(nIndex) \
-            ((nIndex < 0 || nIndex > MAXIMUM_THREADS ? false : true) && \
-             Scripts[nIndex ].bLoaded ? true : false)
+                // Return a float from within host function...
+                void ReturnFloatFromHost(Script hScript, uint8 unParameters,
+                                         float fReturnValue);
 
-        // Is index refer to a valid function?
-        #define IsValidFunctionIndex(hScript, nIndex) \
-            (nIndex < 0 || nIndex > Scripts[hScript]. \
-                FunctionTableHeader.unSize ? false : true)
+                // Return a string from within a host function...
+                void ReturnStringFromHost(Script hScript, uint8 unParameters,
+                                          char *pszReturnValue);
 
-        // Is index refer to a valid host function?
-        #define IsValidHostFunctionIndex(hScript, nIndex) \
-            (nIndex < 0 || nIndex > Scripts[hScript]. \
-                HostFunctionTableHeader.unSize ? false : true)
+            // Deconstructor shuts down runtime enviroment...
+           ~VirtualMachine();
 
-    // Protected data...
-    protected:
+        // Protected data types, macros, and other miscellaneous things...
+        protected:
 
-        // Checksum calculation register...
-        uint32  unTempCheckSum;
+            // Host provided function...
+            typedef struct _AVM_HostProvidedFunction
+            {
+                // Host function loaded flag...
+                boolean                 bLoaded;
 
-        // Host version...
-        char   *pszHostName;
-        uint8   HostVersionMajor;
-        uint8   HostVersionMinor;
+                // Script this function is visible to...
+                Script                  hScriptVisibleTo;
 
-        // Script array...
-        AVM_Script  Scripts[MAXIMUM_THREADS];
+                // Function name...
+                char                    szName[256];
 
-        // Host provided function table...
-        AVM_HostProvidedFunction
-            HostProvidedFunctionTable[MAXIMUM_HOST_PROVIDED_FUNCTIONS];
+                // Host routine's entry point...
+                HostProvidedFunction   *pEntryPoint;
 
-        // Threading...
-        uint8   CurrentThreadingMode;
-        Script  hCurrentThread;
-        uint32  unCurrentThreadActivationTime;
+            }AVM_HostProvidedFunction;
 
-    // Protected methods...
-    protected:
+            // Runtime value... (used in stack, registers, and instruction stream)
+            typedef struct _AVM_RuntimeValue
+            {
+                // Operand type...
+                uint8           OperandType;
 
-        // Checksum calculation...
+                // Operand...
+                union
+                {
+                    // Literal integer...
+                    int32           nLiteralInteger;
 
-            // Calculate checksum of executable file at given path...
-            uint32 CalculateCheckSumOfExecutable(const char *pszPath);
+                    // Literal float...
+                    float32         fLiteralFloat;
 
-            // Acknowledge bit in calculation...
-            void CheckSum_PutBit(boolean Bit);
+                    // String literal...
+                    char           *pszLiteralString;
 
-            // Acknowledge byte in calculation...
-            void CheckSum_PutByte(uint8 Byte);
+                    // Stack index... (second element needed only with relative
+                    //  stack indices to store offset)
+                    int32           nStackIndex[2];
 
-            // Acknowledge stream of bytes in calculation...
-            void CheckSum_PutBytes(uint8 *pBytes, uint32 unSize);
+                    // Instruction index...
+                    int32           nInstructionIndex;
 
-        // Loading...
+                    // Function index...
+                    int32           nFunctionIndex;
 
-            /* Display statistics... (for debugging purposes only)
-            void DisplayStatistics(Script hScript) const;*/
+                    // Host function index...
+                    int32           nHostFunctionIndex;
 
-            // Load bytes or throw error string...
-            void LoadBytes(void *pStorageBuffer, uint32 unEachOfSize,
-                           uint32 unMembers, FILE *hFile);
+                    // Register identifier...
+                    uint8           Register;
+                };
 
-            // Check version...
-            bool VersionSafe(uint8 AvailableMajor, uint8 AvailableMinor,
-                             uint8 RequestedMajor, uint8 RequestedMinor);
+            }AVM_RuntimeValue;
 
-        // Function interfacing...
+            // Instruction structure...
+            typedef struct _AVM_Instruction
+            {
+                // Operation code...
+                uint16              usOperationCode;
 
-            // The actual implementation to call script functions any way...
-            void CallFunctionImplementation(Script hScript, uint32 unIndex);
+                // Operand count...
+                uint8               OperandCount;
 
-            // Get a function by index or return NULL on error...
-            Agni_Function GetFunction(Script hScript, uint32 unIndex);
+                // Operand list...
+                AVM_RuntimeValue   *pOperandList;
 
-            // Get a function index by name or return -1 on error...
-            int32 GetFunctionIndexByName(Script hScript, char *pszName);
+            }AVM_Instruction;
 
-            // Get script's host function name for current thread by index...
-            char *GetHostFunction(uint32 unIndex);
+            // Instruction stream structure...
+            typedef struct _AVM_InstructionStream
+            {
+                // The instruction stream itself...
+                AVM_Instruction    *pInstructions;
 
-        // Operand coercion...
+                // Instruction pointer...
+                uint32              unInstructionPointer;
 
-            // Coerce value to integer or throw error string...
-            int32 CoerceValueToInteger(AVM_RuntimeValue RuntimeValue);
+            }AVM_InstructionStream;
 
-            // Coerce value to float or throw error string...
-            float32 CoerceValueToFloat(AVM_RuntimeValue RuntimeValue);
+            // Runtime stack structure...
+            typedef struct _AVM_RuntimeStack
+            {
+                // Stack elements...
+                AVM_RuntimeValue   *pElements;
 
-            // Coerce value to string or throw error string...
-            char *CoerceValueToString(AVM_RuntimeValue RuntimeValue);
+                // Top index...
+                int32               nTopIndex;
 
-        // Operand resolution...
+                // Index of the top of the current stack frame...
+                uint32              unCurrentStackFrameTopIndex;
 
-            // Copy source value into destination or throw error string...
-            void CopyValue(AVM_RuntimeValue *pDestinationValue,
-                           AVM_RuntimeValue SourceValue);
+            }AVM_RuntimeStack;
 
-    		// Get operand type as exists in instruction stream...
-            uint8 GetOperandType(uint8 OperandIndex);
+            // Script structure...
+            typedef struct _AVM_Script
+            {
+                // Is this script loaded?
+                boolean                         bLoaded;
 
-            // Resolve operand's stack index, whether relative or absolute
-            //   or throw error string...
-    		int32 ResolveOperandStackIndex(uint8 OperandIndex);
+                // Is it executing?
+                boolean                         bExecuting;
 
-    		// Resolve an operand's value or throw error string...
-            AVM_RuntimeValue ResolveOperandValue(uint8 OperandIndex);
+                // Main header...
+                Agni_MainHeader                 MainHeader;
 
-            // Resolves final type of operand and returns the resolved type...
-    		uint8 ResolveOperandType(uint8 OperandIndex);
+                // Instruction stream header...
+                Agni_InstructionStreamHeader    InstructionStreamHeader;
 
-    		// Resolve operand as an integer...
-            int32 ResolveOperandAsInteger(uint8 OperandIndex);
+                // Instruction stream...
+                AVM_InstructionStream           InstructionStream;
 
-            // Resolve operand as a float...
-            float32 ResolveOperandAsFloat(uint8 OperandIndex);
+                // String stream header...
+                Agni_StringStreamHeader         StringStreamHeader;
 
-    		// Resolve operand as a string...
-            char *ResolveOperandAsString(uint8 OperandIndex);
+                // Function table header...
+                Agni_FunctionTableHeader        FunctionTableHeader;
 
-            // Resolve operand as an instruction index...
-    		int32 ResolveOperandAsInstructionIndex(uint8 OperandIndex);
+                // Function table...
+                Agni_Function                  *pFunctionTable;
 
-    		// Resolve operand as a function index...
-            int32 ResolveOperandAsFunctionIndex(uint8 OperandIndex);
+                // Host function table header...
+                Agni_HostFunctionTableHeader    HostFunctionTableHeader;
 
-            // Resolve operand as a host function call...
-    		int32 ResolveOperandAsHostFunctionIndex(uint8 OperandIndex);
+                // Host function table...
+                Agni_HostFunction              *pHostFunctionTable;
 
-            // Resolves operand and returns a pointer to it's runtime value or
-            //  NULL if not applicable...
-    		AVM_RuntimeValue *ResolveOperandAsPointer(uint8 OperandIndex);
+                // Paused, and if so, until what time?
+                boolean                         bPaused;
+                uint32                          unPauseEndTime;
 
-        // Runtime stack interface...
+                // Thread time slice...
+                uint32                          unThreadTimeSlice;
 
-            // Get a runtime value on the stack or throw error string...
-            AVM_RuntimeValue GetStackValue(Script hScript, int32 nIndex);
+                // Registers...
+                
+                    // General purpose...
+                    AVM_RuntimeValue            _RegisterT0;
+                    AVM_RuntimeValue            _RegisterT1;
 
-    		// Pop value off of the stack or throw error string...
-    		AVM_RuntimeValue Pop(Script hScript);
+                    // Return...
+                    AVM_RuntimeValue            _RegisterReturn;
 
-            // Push value onto the stack or throw error string...
-    		void Push(Script hScript, AVM_RuntimeValue RuntimeValue);
+                // Runtime stack...
+                AVM_RuntimeStack                Stack;
 
-    		// Push a stack frame onto the stack or throw error string...
-            void PushStackFrame(Script hScript, uint32 unSize);
+            }AVM_Script;
 
-    		// Pop stack frame off of the stack or throw error string...
-            void PopStackFrame(Script hScript, uint32 unSize);
+            // Default stack size...
+            #define DEFAULT_STACK_SIZE              1024
 
-            // Set stack value or throw error string...
-    		void SetStackValue(Script hScript, int32 nIndex,
-                               AVM_RuntimeValue RuntimeValue);
-};
+            // Maximum string coercion length...
+            #define MAXIMUM_COERCION_LENGTH         63
+
+            // Maximum number of threads...
+            #define MAXIMUM_THREADS                 1024
+
+            // Maximum number of host provided functions...
+            #define MAXIMUM_HOST_PROVIDED_FUNCTIONS 256
+
+            // Threading modes...
+            enum THREADING_MODE
+            {
+                THREADING_MODE_MULTIPLE = 0,
+                THREADING_MODE_SINGLE
+            };
+
+            // Threading priority time slice durations...
+            enum THREAD_PRIORITY_DURATION
+            {
+                THREAD_PRIORITY_LOW_DURATION    = 20,
+                THREAD_PRIORITY_MEDIUM_DURATION = 40,
+                THREAD_PRIORITY_HIGH_DURATION   = 80
+            };
+
+            // Resolve stack index for current thread if relative to absolute...
+            #define ResolveStackIndex(hScript, nIndex) \
+                (nIndex < 0 ? nIndex += Scripts[hScript].Stack. \
+                    unCurrentStackFrameTopIndex  : nIndex)
+
+            // Is thread a valid index and loaded?
+            #define IsValidThread(nIndex) \
+                ((nIndex < 0 || nIndex > MAXIMUM_THREADS ? false : true) && \
+                 Scripts[nIndex ].bLoaded ? true : false)
+
+            // Is index refer to a valid function?
+            #define IsValidFunctionIndex(hScript, nIndex) \
+                (nIndex < 0 || nIndex > Scripts[hScript]. \
+                    FunctionTableHeader.unSize ? false : true)
+
+            // Is index refer to a valid host function?
+            #define IsValidHostFunctionIndex(hScript, nIndex) \
+                (nIndex < 0 || nIndex > Scripts[hScript]. \
+                    HostFunctionTableHeader.unSize ? false : true)
+
+        // Protected data...
+        protected:
+
+            // Checksum calculation register...
+            uint32  unTempCheckSum;
+
+            // Host version...
+            char   *pszHostName;
+            uint8   HostVersionMajor;
+            uint8   HostVersionMinor;
+
+            // Script array...
+            AVM_Script  Scripts[MAXIMUM_THREADS];
+
+            // Host provided function table...
+            AVM_HostProvidedFunction
+                HostProvidedFunctionTable[MAXIMUM_HOST_PROVIDED_FUNCTIONS];
+
+            // Threading...
+            uint8   CurrentThreadingMode;
+            Script  hCurrentThread;
+            uint32  unCurrentThreadActivationTime;
+
+        // Protected methods...
+        protected:
+
+            // Checksum calculation...
+
+                // Calculate checksum of executable file at given path...
+                uint32 CalculateCheckSumOfExecutable(const char *pszPath);
+
+                // Acknowledge bit in calculation...
+                void CheckSum_PutBit(boolean Bit);
+
+                // Acknowledge byte in calculation...
+                void CheckSum_PutByte(uint8 Byte);
+
+                // Acknowledge stream of bytes in calculation...
+                void CheckSum_PutBytes(uint8 *pBytes, uint32 unSize);
+
+            // Loading...
+
+                /* Display statistics... (for debugging purposes only)
+                void DisplayStatistics(Script hScript) const;*/
+
+                // Load bytes or throw error string...
+                void LoadBytes(void *pStorageBuffer, uint32 unEachOfSize,
+                               uint32 unMembers, FILE *hFile);
+
+                // Check version...
+                bool VersionSafe(uint8 AvailableMajor, uint8 AvailableMinor,
+                                 uint8 RequestedMajor, uint8 RequestedMinor);
+
+            // Function interfacing...
+
+                // The actual implementation to call script functions any way...
+                void CallFunctionImplementation(Script hScript, uint32 unIndex);
+
+                // Get a function by index or return NULL on error...
+                Agni_Function GetFunction(Script hScript, uint32 unIndex);
+
+                // Get a function index by name or return -1 on error...
+                int32 GetFunctionIndexByName(Script hScript, char *pszName);
+
+                // Get script's host function name for current thread by index...
+                char *GetHostFunction(uint32 unIndex);
+
+            // Operand coercion...
+
+                // Coerce value to integer or throw error string...
+                int32 CoerceValueToInteger(AVM_RuntimeValue RuntimeValue);
+
+                // Coerce value to float or throw error string...
+                float32 CoerceValueToFloat(AVM_RuntimeValue RuntimeValue);
+
+                // Coerce value to string or throw error string...
+                char *CoerceValueToString(AVM_RuntimeValue RuntimeValue);
+
+            // Operand resolution...
+
+                // Copy source value into destination or throw error string...
+                void CopyValue(AVM_RuntimeValue *pDestinationValue,
+                               AVM_RuntimeValue SourceValue);
+
+        		// Get operand type as exists in instruction stream...
+                uint8 GetOperandType(uint8 OperandIndex);
+
+                // Resolve operand's stack index, whether relative or absolute
+                //   or throw error string...
+        		int32 ResolveOperandStackIndex(uint8 OperandIndex);
+
+        		// Resolve an operand's value or throw error string...
+                AVM_RuntimeValue ResolveOperandValue(uint8 OperandIndex);
+
+                // Resolves final type of operand and returns the resolved type...
+        		uint8 ResolveOperandType(uint8 OperandIndex);
+
+        		// Resolve operand as an integer...
+                int32 ResolveOperandAsInteger(uint8 OperandIndex);
+
+                // Resolve operand as a float...
+                float32 ResolveOperandAsFloat(uint8 OperandIndex);
+
+        		// Resolve operand as a string...
+                char *ResolveOperandAsString(uint8 OperandIndex);
+
+                // Resolve operand as an instruction index...
+        		int32 ResolveOperandAsInstructionIndex(uint8 OperandIndex);
+
+        		// Resolve operand as a function index...
+                int32 ResolveOperandAsFunctionIndex(uint8 OperandIndex);
+
+                // Resolve operand as a host function call...
+        		int32 ResolveOperandAsHostFunctionIndex(uint8 OperandIndex);
+
+                // Resolves operand and returns a pointer to it's runtime value or
+                //  NULL if not applicable...
+        		AVM_RuntimeValue *ResolveOperandAsPointer(uint8 OperandIndex);
+
+            // Runtime stack interface...
+
+                // Get a runtime value on the stack or throw error string...
+                AVM_RuntimeValue GetStackValue(Script hScript, int32 nIndex);
+
+        		// Pop value off of the stack or throw error string...
+        		AVM_RuntimeValue Pop(Script hScript);
+
+                // Push value onto the stack or throw error string...
+        		void Push(Script hScript, AVM_RuntimeValue RuntimeValue);
+
+        		// Push a stack frame onto the stack or throw error string...
+                void PushStackFrame(Script hScript, uint32 unSize);
+
+        		// Pop stack frame off of the stack or throw error string...
+                void PopStackFrame(Script hScript, uint32 unSize);
+
+                // Set stack value or throw error string...
+        		void SetStackValue(Script hScript, int32 nIndex,
+                                   AVM_RuntimeValue RuntimeValue);
+    };
+}
 
 #endif

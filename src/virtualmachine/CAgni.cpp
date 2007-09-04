@@ -1,17 +1,20 @@
 /*
   Name:         CAgni.cpp (implementation)
   Copyright:    Kip Warner (Kip@TheVertigo.com)
-  Description:  AgniVirtualMachine implementation...
+  Description:  VirtualMachine implementation...
 */
 
 // Includes...
 
-    // CAgni definition...
+    // Virtual machine definition...
     #include "../include/CAgni.h"
 
+// Using the Agni namespace...
+using namespace Agni;
+
 // Constructor initializes runtime enviroment...
-CAgni::CAgni(char *_pszHostName, uint8 _HostVersionMajor,
-             uint8 _HostVersionMinor)
+VirtualMachine::VirtualMachine(char *_pszHostName, uint8 _HostVersionMajor,
+                               uint8 _HostVersionMinor)
 {
     // Reset tables and variables to initial state...
     memset(&HostProvidedFunctionTable, '\x0',
@@ -28,7 +31,7 @@ CAgni::CAgni(char *_pszHostName, uint8 _HostVersionMajor,
 }
 
 // Calculate checksum of file at given path...
-uint32 CAgni::CalculateCheckSumOfExecutable(const char *pszPath)
+uint32 VirtualMachine::CalculateCheckSumOfExecutable(const char *pszPath)
 {
     // Variables...
     FILE               *hFile                       = NULL;
@@ -75,7 +78,7 @@ uint32 CAgni::CalculateCheckSumOfExecutable(const char *pszPath)
 }
 
 // Call script function asynchronously... (blocking)
-boolean CAgni::CallFunction(Script hScript, char *pszName)
+boolean VirtualMachine::CallFunction(Script hScript, char *pszName)
 {
     // Variables...
     int32               nFunctionIndex          = 0;
@@ -130,7 +133,7 @@ boolean CAgni::CallFunction(Script hScript, char *pszName)
 }
 
 // The actual implementation to call script functions any way...
-void CAgni::CallFunctionImplementation(Script hScript, uint32 unIndex)
+void VirtualMachine::CallFunctionImplementation(Script hScript, uint32 unIndex)
 {
     // Variables...
     Agni_Function       DestinationFunction;
@@ -166,7 +169,7 @@ void CAgni::CallFunctionImplementation(Script hScript, uint32 unIndex)
 }
 
 // Call script function synchronously... (non-blocking)
-boolean CAgni::CallFunctionSynchronously(Script hScript, char *pszName)
+boolean VirtualMachine::CallFunctionSynchronously(Script hScript, char *pszName)
 {
     // Variables..
     int32 nFunctionIndex = 0;
@@ -190,7 +193,7 @@ boolean CAgni::CallFunctionSynchronously(Script hScript, char *pszName)
 }
 
 // Acknowledge bit in calculation...
-inline void CAgni::CheckSum_PutBit(boolean Bit)
+inline void VirtualMachine::CheckSum_PutBit(boolean Bit)
 {
     // Variables...
     boolean TopBit = 0;
@@ -204,11 +207,11 @@ inline void CAgni::CheckSum_PutBit(boolean Bit)
 
     // Calculate checksum...
     if(TopBit)
-        unTempCheckSum ^= AGNI_CHECKSUM_KEY;
+        unTempCheckSum ^= unCheckSumKey;
 }
 
 // Acknowledge byte in calculation...
-inline void CAgni::CheckSum_PutByte(uint8 Byte)
+inline void VirtualMachine::CheckSum_PutByte(uint8 Byte)
 {
     // Variables...
     uint16  usBit   = 0;
@@ -226,7 +229,7 @@ inline void CAgni::CheckSum_PutByte(uint8 Byte)
 }
 
 // Acknowledge stream of bytes in calculation...
-void CAgni::CheckSum_PutBytes(uint8 *pBytes, uint32 unSize)
+void VirtualMachine::CheckSum_PutBytes(uint8 *pBytes, uint32 unSize)
 {
     // Variables...
     unsigned long unIndex = 0;
@@ -237,7 +240,7 @@ void CAgni::CheckSum_PutBytes(uint8 *pBytes, uint32 unSize)
 }
 
 // Coerce value to float or throw error string...
-float32 CAgni::CoerceValueToFloat(AVM_RuntimeValue RuntimeValue)
+float32 VirtualMachine::CoerceValueToFloat(AVM_RuntimeValue RuntimeValue)
 {
     // Coerce differently, depending on type...
     switch(RuntimeValue.OperandType)
@@ -261,7 +264,7 @@ float32 CAgni::CoerceValueToFloat(AVM_RuntimeValue RuntimeValue)
 }
 
 // Coerce value to integer or throw error string...
-int32 CAgni::CoerceValueToInteger(AVM_RuntimeValue RuntimeValue)
+int32 VirtualMachine::CoerceValueToInteger(AVM_RuntimeValue RuntimeValue)
 {
     // Coerce differently, depending on type...
     switch(RuntimeValue.OperandType)
@@ -285,7 +288,7 @@ int32 CAgni::CoerceValueToInteger(AVM_RuntimeValue RuntimeValue)
 }
 
 // Coerce value to string or throw error string...
-char *CAgni::CoerceValueToString(AVM_RuntimeValue RuntimeValue)
+char *VirtualMachine::CoerceValueToString(AVM_RuntimeValue RuntimeValue)
 {
     // Variables...
     char   *pszCoercion = NULL;
@@ -332,7 +335,7 @@ char *CAgni::CoerceValueToString(AVM_RuntimeValue RuntimeValue)
 }
 
 // Copy source value into destination or throw error string...
-void CAgni::CopyValue(AVM_RuntimeValue *pDestinationValue,
+void VirtualMachine::CopyValue(AVM_RuntimeValue *pDestinationValue,
                       AVM_RuntimeValue SourceValue)
 {
     // Destination already contains a string, so free it...
@@ -364,7 +367,7 @@ void CAgni::CopyValue(AVM_RuntimeValue *pDestinationValue,
 }
 
 /* Display statistics...
-void CAgni::DisplayStatistics(Script hScript) const
+void VirtualMachine::DisplayStatistics(Script hScript) const
 {
     // Display statistics...
 
@@ -423,14 +426,14 @@ void CAgni::DisplayStatistics(Script hScript) const
 }*/
 
 // Get a function by index or return NULL on error...
-inline CAgni::Agni_Function CAgni::GetFunction(Script hScript, uint32 unIndex)
+inline Agni_Function VirtualMachine::GetFunction(Script hScript, uint32 unIndex)
 {
     // Return it...
     return Scripts[hScript].pFunctionTable[unIndex];
 }
 
 // Get a function index by name or return -1 on error...
-int32 CAgni::GetFunctionIndexByName(Script hScript, char *pszName)
+int32 VirtualMachine::GetFunctionIndexByName(Script hScript, char *pszName)
 {
     // Check handle...
     if(!IsValidThread(hScript))
@@ -452,14 +455,14 @@ int32 CAgni::GetFunctionIndexByName(Script hScript, char *pszName)
 }
 
 // Get the script's host function name for the current thread by index...
-inline char *CAgni::GetHostFunction(uint32 unIndex)
+inline char *VirtualMachine::GetHostFunction(uint32 unIndex)
 {
     // Return it...
     return Scripts[hCurrentThread].pHostFunctionTable[unIndex].szName;
 }
 
 // Get operand type as exists in instruction stream...
-inline uint8 CAgni::GetOperandType(uint8 OperandIndex)
+inline uint8 VirtualMachine::GetOperandType(uint8 OperandIndex)
 {
     // Variables...
     uint32  unCurrentInstruction    = 0;
@@ -475,7 +478,7 @@ inline uint8 CAgni::GetOperandType(uint8 OperandIndex)
 }
 
 // Get passed parameter as an integer...
-int CAgni::GetParameterAsInteger(Script hScript, uint8 unParameter)
+int VirtualMachine::GetParameterAsInteger(Script hScript, uint8 unParameter)
 {
     // Variables...
     int32               nTopIndex           = 0;
@@ -496,7 +499,7 @@ int CAgni::GetParameterAsInteger(Script hScript, uint8 unParameter)
 }
 
 // Get passed parameter as a float...
-float CAgni::GetParameterAsFloat(Script hScript, uint8 unParameter)
+float VirtualMachine::GetParameterAsFloat(Script hScript, uint8 unParameter)
 {
     // Variables...
     int32               nTopIndex           = 0;
@@ -517,7 +520,7 @@ float CAgni::GetParameterAsFloat(Script hScript, uint8 unParameter)
 }
 
 // Get passed parameter as a string...
-char *CAgni::GetParameterAsString(Script hScript, uint8 unParameter)
+char *VirtualMachine::GetParameterAsString(Script hScript, uint8 unParameter)
 {
     // Variables...
     int32               nTopIndex           = 0;
@@ -538,7 +541,7 @@ char *CAgni::GetParameterAsString(Script hScript, uint8 unParameter)
 }
 
 // Get return as a float from an asynchronous call...
-float CAgni::GetReturnValueAsFloat(Script hScript)
+float VirtualMachine::GetReturnValueAsFloat(Script hScript)
 {
     // Check handle...
     if(!IsValidThread(hScript))
@@ -549,7 +552,7 @@ float CAgni::GetReturnValueAsFloat(Script hScript)
 }
 
 // Get return as an integer from an asynchronous call...
-int CAgni::GetReturnValueAsInteger(Script hScript)
+int VirtualMachine::GetReturnValueAsInteger(Script hScript)
 {
     // Check handle...
     if(!IsValidThread(hScript))
@@ -560,8 +563,8 @@ int CAgni::GetReturnValueAsInteger(Script hScript)
 }
 
 // Get return as a string from an asynchronous call...
-char *CAgni::GetReturnValueAsString(Script hScript, char *pszBuffer,
-                                    uint32 unBufferSize)
+char *VirtualMachine::GetReturnValueAsString(Script hScript, char *pszBuffer,
+                                             uint32 unBufferSize)
 {
     // Check handle...
     if(!IsValidThread(hScript))
@@ -580,23 +583,25 @@ char *CAgni::GetReturnValueAsString(Script hScript, char *pszBuffer,
 }
 
 // Get a runtime value on the stack...
-inline CAgni::AVM_RuntimeValue CAgni::GetStackValue(Script hScript, int32 nIndex)
+inline VirtualMachine::AVM_RuntimeValue 
+    VirtualMachine::GetStackValue(Script hScript, int32 nIndex)
 {
     // Get element at specified index...
     return Scripts[hScript].Stack.pElements[ResolveStackIndex(hScript, nIndex)];
 }
 
 // Load bytes or throws error code...
-void CAgni::LoadBytes(void *pStorageBuffer, uint32 unEachOfSize,
-                      uint32 unMembers, FILE *hFile)
+void VirtualMachine::LoadBytes(void *pStorageBuffer, uint32 unEachOfSize,
+                               uint32 unMembers, FILE *hFile)
 {
     // Read and check for error...
     if(unMembers != fread(pStorageBuffer, unEachOfSize, unMembers, hFile))
-        throw STATUS_ERROR_BAD_EXECUTABLE;
+        throw Bad_Executable;
 }
 
 // Load script, store handle, return a status code...
-CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
+VirtualMachine::Status 
+    VirtualMachine::LoadScript(const char *pszPath, Script &hScript)
 {
     // Variables...
     FILE   *hScriptFile                 = NULL;
@@ -620,7 +625,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
 
             // Scanned entire list without finding vacancy, failed...
             if(hScript + 1 == (MAXIMUM_THREADS - 1))
-                throw STATUS_ERROR_THREADS_EXHAUSTED;
+                throw Threads_Exhausted;
 
         // Clear script...
         memset(&Scripts[hScript], 0, sizeof(AVM_Script));
@@ -630,7 +635,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
 
             // Failed...
             if(!hScriptFile)
-                throw STATUS_ERROR_CANNOT_OPEN;
+                throw Cannot_Open;
 
         // Process main header...
 
@@ -647,18 +652,18 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
                 // Check...
                 if(memcmp(&Scripts[hScript].MainHeader.Signature, szBuffer,
                           sizeof(Scripts[hScript].MainHeader.Signature)) != 0)
-                    throw STATUS_ERROR_BAD_EXECUTABLE;
+                    throw Bad_Executable;
 
             // Check checksum...
             if(CalculateCheckSumOfExecutable(pszPath) !=
                Scripts[hScript].MainHeader.unCheckSum)
-                throw STATUS_ERROR_BAD_CHECKSUM;
+                throw Bad_CheckSum;
 
             // Check required Agni runtime version...
             if(!VersionSafe(AGNI_VERSION_MAJOR, AGNI_VERSION_MINOR,
                             Scripts[hScript].MainHeader.ucMajorRequiredAgniVersion,
                             Scripts[hScript].MainHeader.ucMinorRequiredAgniVersion))
-                throw STATUS_ERROR_OLD_AGNI_RUNTIME;
+                throw Old_Agni_Runtime;
 
             // Check host, if any host information provided...
             if(Scripts[hScript].MainHeader.unHostStringIndex != (uint32) -1)
@@ -667,7 +672,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
                 if(!VersionSafe(HostVersionMajor, HostVersionMinor,
                                 Scripts[hScript].MainHeader.ucHostMajorVersion,
                                 Scripts[hScript].MainHeader.ucHostMinorVersion))
-                    throw STATUS_ERROR_OLD_HOST;
+                    throw Old_Host_Runtime;
             }
 
             // Check for default stack size...
@@ -681,7 +686,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
 
                 // Failed...
                 if(!Scripts[hScript].Stack.pElements)
-                    throw STATUS_ERROR_MEMORY_ALLOCATION;
+                    throw Memory_Allocation;
 
             // Set thread's time slice duration...
             switch(Scripts[hScript].MainHeader.ThreadPriorityType)
@@ -728,7 +733,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
 
                 // Unknown...
                 default:
-                    throw STATUS_ERROR_BAD_EXECUTABLE;
+                    throw Bad_Executable;
             }
 
         // Process instruction stream...
@@ -745,7 +750,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
 
                 // Failed...
                 if(!Scripts[hScript].InstructionStream.pInstructions)
-                    throw STATUS_ERROR_MEMORY_ALLOCATION;
+                    throw Memory_Allocation;
 
             // Load instruction stream...
             for(unCurrentInstructionIndex = 0;
@@ -888,7 +893,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
 
                         // Unknown...
                         default:
-                            throw STATUS_ERROR_BAD_EXECUTABLE;
+                            throw Bad_Executable;
                     }
                 }
 
@@ -918,7 +923,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
 
                     // Failed...
                     if(!ppszStringTable)
-                        throw STATUS_ERROR_MEMORY_ALLOCATION;
+                        throw Memory_Allocation;
 
                 // Load each string...
                 for(usCurrentStringIndex = 0;
@@ -942,7 +947,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
                             free(ppszStringTable);
 
                             // Abort...
-                            throw STATUS_ERROR_MEMORY_ALLOCATION;
+                            throw Memory_Allocation;
                         }
 
                     // Load string and terminate... (unStringLength bytes)
@@ -1002,7 +1007,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
                                 free(ppszStringTable);
 
                                 // Abort...
-                                throw STATUS_ERROR_MEMORY_ALLOCATION;
+                                throw Memory_Allocation;
                             }
 
                         // Insert instance into instruction's operand data...
@@ -1038,7 +1043,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
                                 free(ppszStringTable);
 
                         // Abort...
-                        throw STATUS_ERROR_WRONG_HOST;
+                        throw Wrong_Host;
                     }
                 }
 
@@ -1071,7 +1076,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
 
                     // Failed...
                     if(!Scripts[hScript].pFunctionTable)
-                        throw STATUS_ERROR_MEMORY_ALLOCATION;
+                        throw Memory_Allocation;
             }
 
             // Load each function...
@@ -1139,7 +1144,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
 
                     // Failed...
                     if(!Scripts[hScript].pHostFunctionTable)
-                        throw STATUS_ERROR_MEMORY_ALLOCATION;
+                        throw Memory_Allocation;
             }
 
             // Load each host function...
@@ -1169,7 +1174,7 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
     }
 
         // Failed to load script...
-        catch(STATUS Reason)
+        catch(Status Reason)
         {
             // Cleanup...
 
@@ -1259,11 +1264,11 @@ CAgni::STATUS CAgni::LoadScript(const char *pszPath, Script &hScript)
     DisplayStatistics(hScript);*/
 
     // Done...
-    return STATUS_OK;
+    return Ok;
 }
 
 // Pass float parameter...
-boolean CAgni::PassFloatParameter(Script hScript, float fValue)
+boolean VirtualMachine::PassFloatParameter(Script hScript, float fValue)
 {
     // Variables...
     AVM_RuntimeValue    FloatParameter;
@@ -1295,7 +1300,7 @@ boolean CAgni::PassFloatParameter(Script hScript, float fValue)
 }
 
 // Pass integer parameter...
-boolean CAgni::PassIntegerParameter(Script hScript, int nValue)
+boolean VirtualMachine::PassIntegerParameter(Script hScript, int nValue)
 {
     // Variables...
     AVM_RuntimeValue    IntegerParameter;
@@ -1327,7 +1332,7 @@ boolean CAgni::PassIntegerParameter(Script hScript, int nValue)
 }
 
 // Pass string parameter...
-boolean CAgni::PassStringParameter(Script hScript, char *pszValue)
+boolean VirtualMachine::PassStringParameter(Script hScript, char *pszValue)
 {
     // Variables...
     AVM_RuntimeValue    StringParameter;
@@ -1363,7 +1368,7 @@ boolean CAgni::PassStringParameter(Script hScript, char *pszValue)
 }
 
 // Pause a script for a certain duration...
-boolean CAgni::PauseScript(Script hScript, uint32 unDuration)
+boolean VirtualMachine::PauseScript(Script hScript, uint32 unDuration)
 {
     // Check handle...
     if(!IsValidThread(hScript))
@@ -1371,14 +1376,14 @@ boolean CAgni::PauseScript(Script hScript, uint32 unDuration)
 
     // Trigger pause...
     Scripts[hScript].bPaused = true;
-    Scripts[hScript].unPauseEndTime = __Agni_GetMilliSeconds() + unDuration;
+    Scripts[hScript].unPauseEndTime = GetSystemMilliSeconds() + unDuration;
 
     // Done...
     return true;
 }
 
 // Pop value off of the stack or throw execution exception...
-inline CAgni::AVM_RuntimeValue CAgni::Pop(Script hScript)
+inline VirtualMachine::AVM_RuntimeValue VirtualMachine::Pop(Script hScript)
 {
     // Variables...
     AVM_RuntimeValue    PoppedValue;
@@ -1402,7 +1407,7 @@ inline CAgni::AVM_RuntimeValue CAgni::Pop(Script hScript)
 }
 
 // Push a stack frame onto the stack or throw execution exception...
-inline void CAgni::PushStackFrame(Script hScript, uint32 unSize)
+inline void VirtualMachine::PushStackFrame(Script hScript, uint32 unSize)
 {
     // Check for stack overflow...
     if(Scripts[hScript].Stack.nTopIndex + unSize >=
@@ -1418,7 +1423,7 @@ inline void CAgni::PushStackFrame(Script hScript, uint32 unSize)
 }
 
 // Pop stack frame off of the stack or throw execution exception...
-inline void CAgni::PopStackFrame(Script hScript, uint32 unSize)
+inline void VirtualMachine::PopStackFrame(Script hScript, uint32 unSize)
 {
     // Stack underflow...
     if(Scripts[hScript].Stack.nTopIndex - unSize < 0)
@@ -1433,7 +1438,7 @@ inline void CAgni::PopStackFrame(Script hScript, uint32 unSize)
 }
 
 // Push value onto the stack or throw execution exception...
-inline void CAgni::Push(Script hScript, AVM_RuntimeValue RuntimeValue)
+inline void VirtualMachine::Push(Script hScript, AVM_RuntimeValue RuntimeValue)
 {
     // Variables...
     int32   nTopIndex   = 0;
@@ -1454,7 +1459,7 @@ inline void CAgni::Push(Script hScript, AVM_RuntimeValue RuntimeValue)
 }
 
 // Register host provided function...
-bool CAgni::RegisterHostProvidedFunction(Script hThread,
+bool VirtualMachine::RegisterHostProvidedFunction(Script hThread,
     const char *pszName, HostProvidedFunction *pHostProvidedFunction)
 {
     // Variables...
@@ -1499,7 +1504,7 @@ bool CAgni::RegisterHostProvidedFunction(Script hThread,
 }
 
 // Reset a script...
-boolean CAgni::ResetScript(Script hScript)
+boolean VirtualMachine::ResetScript(Script hScript)
 {
     // Variables...
     uint32  unMainIndex     = 0;
@@ -1558,7 +1563,7 @@ boolean CAgni::ResetScript(Script hScript)
 }
 
 // Resolve operand as float or throw error string...
-inline float32 CAgni::ResolveOperandAsFloat(uint8 OperandIndex)
+inline float32 VirtualMachine::ResolveOperandAsFloat(uint8 OperandIndex)
 {
     // Variables...
     AVM_RuntimeValue    OperandValue;
@@ -1571,7 +1576,7 @@ inline float32 CAgni::ResolveOperandAsFloat(uint8 OperandIndex)
 }
 
 // Resolve operand as an integer or throw error string...
-inline int32 CAgni::ResolveOperandAsInteger(uint8 OperandIndex)
+inline int32 VirtualMachine::ResolveOperandAsInteger(uint8 OperandIndex)
 {
     // Variables...
     AVM_RuntimeValue    OperandValue;
@@ -1584,7 +1589,7 @@ inline int32 CAgni::ResolveOperandAsInteger(uint8 OperandIndex)
 }
 
 // Resolve operand as string or throw error string...
-inline char *CAgni::ResolveOperandAsString(uint8 OperandIndex)
+inline char *VirtualMachine::ResolveOperandAsString(uint8 OperandIndex)
 {
     // Variables...
     AVM_RuntimeValue    OperandValue;
@@ -1598,7 +1603,7 @@ inline char *CAgni::ResolveOperandAsString(uint8 OperandIndex)
 
 // Resolve an operand's stack index, whether absolute or relative or throw
 //  error string...
-inline int32 CAgni::ResolveOperandStackIndex(uint8 OperandIndex)
+inline int32 VirtualMachine::ResolveOperandStackIndex(uint8 OperandIndex)
 {
     // Variables...
     uint32              unCurrentInstruction    = 0;
@@ -1646,7 +1651,7 @@ inline int32 CAgni::ResolveOperandStackIndex(uint8 OperandIndex)
 
 // Resolves final type of operand and returns the resolved type or throw error
 //  string...
-inline uint8 CAgni::ResolveOperandType(uint8 OperandIndex)
+inline uint8 VirtualMachine::ResolveOperandType(uint8 OperandIndex)
 {
     // Variables...
     AVM_RuntimeValue    OperandValue;
@@ -1659,7 +1664,8 @@ inline uint8 CAgni::ResolveOperandType(uint8 OperandIndex)
 }
 
 // Resolve operand's value or throw error string...
-inline CAgni::AVM_RuntimeValue CAgni::ResolveOperandValue(uint8 OperandIndex)
+inline VirtualMachine::AVM_RuntimeValue 
+    VirtualMachine::ResolveOperandValue(uint8 OperandIndex)
 {
     // Variables...
     uint32              unCurrentInstruction    = 0;
@@ -1715,7 +1721,8 @@ inline CAgni::AVM_RuntimeValue CAgni::ResolveOperandValue(uint8 OperandIndex)
 }
 
 // Resolve operand as an instruction index or throw error string...
-inline int32 CAgni::ResolveOperandAsInstructionIndex(uint8 OperandIndex)
+inline int32 
+    VirtualMachine::ResolveOperandAsInstructionIndex(uint8 OperandIndex)
 {
     // Variables...
     AVM_RuntimeValue    OperandValue;
@@ -1728,7 +1735,7 @@ inline int32 CAgni::ResolveOperandAsInstructionIndex(uint8 OperandIndex)
 }
 
 // Resolve operand as a function index or throw error string...
-inline int32 CAgni::ResolveOperandAsFunctionIndex(uint8 OperandIndex)
+inline int32 VirtualMachine::ResolveOperandAsFunctionIndex(uint8 OperandIndex)
 {
     // Variables...
     AVM_RuntimeValue    OperandValue;
@@ -1741,7 +1748,7 @@ inline int32 CAgni::ResolveOperandAsFunctionIndex(uint8 OperandIndex)
 }
 
 // Resolve operand as a host function index or throw error string...
-int32 CAgni::ResolveOperandAsHostFunctionIndex(uint8 OperandIndex)
+int32 VirtualMachine::ResolveOperandAsHostFunctionIndex(uint8 OperandIndex)
 {
     // Variables...
     AVM_RuntimeValue    OperandValue;
@@ -1755,7 +1762,8 @@ int32 CAgni::ResolveOperandAsHostFunctionIndex(uint8 OperandIndex)
 
 // Resolves operand and returns a pointer to it's runtime value or NULL if not
 // applicable...
-inline CAgni::AVM_RuntimeValue *CAgni::ResolveOperandAsPointer(uint8 OperandIndex)
+inline VirtualMachine::AVM_RuntimeValue *
+    VirtualMachine::ResolveOperandAsPointer(uint8 OperandIndex)
 {
     // Variables...
     uint32              unCurrentInstruction    = 0;
@@ -1809,15 +1817,15 @@ inline CAgni::AVM_RuntimeValue *CAgni::ResolveOperandAsPointer(uint8 OperandInde
 }
 
 // Return nothing from within host function...
-void CAgni::ReturnVoidFromHost(Script hScript, uint8 unParameters)
+void VirtualMachine::ReturnVoidFromHost(Script hScript, uint8 unParameters)
 {
     // Clear off the parameters that were originally pushed onto the stack...
     Scripts[hScript].Stack.nTopIndex -= unParameters;
 }
 
 // Return an integer from within host function...
-void CAgni::ReturnIntegerFromHost(Script hScript, uint8 unParameters,
-                           int nReturnValue)
+void VirtualMachine::ReturnIntegerFromHost(Script hScript, uint8 unParameters,
+                                           int nReturnValue)
 {
     // Clear off the parameters that were originally pushed onto the stack...
     Scripts[hScript].Stack.nTopIndex -= unParameters;
@@ -1828,8 +1836,8 @@ void CAgni::ReturnIntegerFromHost(Script hScript, uint8 unParameters,
 }
 
 // Return a float from within host function...
-void CAgni::ReturnFloatFromHost(Script hScript, uint8 unParameters,
-                         float fReturnValue)
+void VirtualMachine::ReturnFloatFromHost(Script hScript, uint8 unParameters,
+                                         float fReturnValue)
 {
     // Clear off the parameters that were originally pushed onto the stack...
     Scripts[hScript].Stack.nTopIndex -= unParameters;
@@ -1840,8 +1848,8 @@ void CAgni::ReturnFloatFromHost(Script hScript, uint8 unParameters,
 }
 
 // Return a string from within a host function...
-void CAgni::ReturnStringFromHost(Script hScript, uint8 unParameters,
-                                 char *pszReturnValue)
+void VirtualMachine::ReturnStringFromHost(Script hScript, uint8 unParameters,
+                                          char *pszReturnValue)
 {
     // Variables...
     AVM_RuntimeValue    ReturnValue;
@@ -1858,7 +1866,7 @@ void CAgni::ReturnStringFromHost(Script hScript, uint8 unParameters,
 }
 
 // Run scripts for specified milliseconds, or 0 until all return...
-boolean CAgni::RunScripts(uint32 unDuration)
+boolean VirtualMachine::RunScripts(uint32 unDuration)
 {
     // Variables...
     bool                bBreakExecution                     = false;
@@ -1888,7 +1896,7 @@ boolean CAgni::RunScripts(uint32 unDuration)
     uint32              unPauseDuration                          = 0;
 
     // Get the current time the main timeslice started...
-    unMainTimeSliceStartTime = __Agni_GetMilliSeconds();
+    unMainTimeSliceStartTime = GetSystemMilliSeconds();
 
     // Enter instruction execution loop... (break conditions are nested)
     while(true)
@@ -1909,7 +1917,7 @@ boolean CAgni::RunScripts(uint32 unDuration)
                 break;
 
         // Remember the current time...
-        unCurrentTime = __Agni_GetMilliSeconds();
+        unCurrentTime = GetSystemMilliSeconds();
 
         // Machine is configured for multithreading, perform context switch...
         if(CurrentThreadingMode == THREADING_MODE_MULTIPLE)
@@ -1937,7 +1945,7 @@ boolean CAgni::RunScripts(uint32 unDuration)
                 }
 
                 // This thread takes over beginning now...
-                unCurrentThreadActivationTime = __Agni_GetMilliSeconds();
+                unCurrentThreadActivationTime = GetSystemMilliSeconds();
             }
         }
 
@@ -2718,7 +2726,7 @@ boolean CAgni::RunScripts(uint32 unDuration)
                 // Variables...
                 //static  uint32  unPreviousRandomNumber  = 17489;
                 static  uint32  unPreviousRandomNumber
-                                                = __Agni_GetMilliSeconds();
+                                                = GetSystemMilliSeconds();
 
                 // Generate random number...
                 unPreviousRandomNumber =
@@ -2791,8 +2799,8 @@ boolean CAgni::RunScripts(uint32 unDuration)
 }
 
 // Set stack value...
-inline void CAgni::SetStackValue(Script hScript, int32 nIndex,
-                                 AVM_RuntimeValue RuntimeValue)
+inline void VirtualMachine::SetStackValue(Script hScript, int32 nIndex,
+                                          AVM_RuntimeValue RuntimeValue)
 {
     // Set element at specified index...
     Scripts[hScript].Stack.pElements[ResolveStackIndex(hScript, nIndex)]
@@ -2800,7 +2808,7 @@ inline void CAgni::SetStackValue(Script hScript, int32 nIndex,
 }
 
 // Start the execution of a script...
-boolean CAgni::StartScript(Script hScript)
+boolean VirtualMachine::StartScript(Script hScript)
 {
     // Check handle...
     if(!IsValidThread(hScript))
@@ -2813,14 +2821,14 @@ boolean CAgni::StartScript(Script hScript)
     hCurrentThread = hScript;
 
     // Set execution activation time...
-    unCurrentThreadActivationTime = __Agni_GetMilliSeconds();
+    unCurrentThreadActivationTime = GetSystemMilliSeconds();
 
     // Done...
     return true;
 }
 
 // Stop the execution of a script...
-boolean CAgni::StopScript(Script hScript)
+boolean VirtualMachine::StopScript(Script hScript)
 {
     // Check handle...
     if(!IsValidThread(hScript))
@@ -2834,7 +2842,7 @@ boolean CAgni::StopScript(Script hScript)
 }
 
 // Unload script...
-boolean CAgni::UnloadScript(Script &hScript)
+boolean VirtualMachine::UnloadScript(Script &hScript)
 {
     // Check handle...
     if(!IsValidThread(hScript))
@@ -2943,7 +2951,7 @@ boolean CAgni::UnloadScript(Script &hScript)
 }
 
 // Unpause a script...
-boolean CAgni::UnPauseScript(Script hScript)
+boolean VirtualMachine::UnPauseScript(Script hScript)
 {
     // Check handle...
     if(!IsValidThread(hScript))
@@ -2957,8 +2965,8 @@ boolean CAgni::UnPauseScript(Script hScript)
 }
 
 // Check version...
-bool CAgni::VersionSafe(uint8 AvailableMajor, uint8 AvailableMinor,
-                        uint8 RequestedMajor, uint8 RequestedMinor)
+bool VirtualMachine::VersionSafe(uint8 AvailableMajor, uint8 AvailableMinor,
+                                 uint8 RequestedMajor, uint8 RequestedMinor)
 {
     // Available major version is newer than requested, ok...
     if(AvailableMajor > RequestedMajor)
@@ -2982,7 +2990,7 @@ bool CAgni::VersionSafe(uint8 AvailableMajor, uint8 AvailableMinor,
 }
 
 // Deconstructor shuts down runtime enviroment...
-CAgni::~CAgni()
+VirtualMachine::~VirtualMachine()
 {
     // Unload all loaded scripts, if any...
     for(Script hCurrentScript = 0; hCurrentScript < MAXIMUM_THREADS;

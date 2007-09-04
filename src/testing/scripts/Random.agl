@@ -20,7 +20,7 @@ Func PrintRandomNumbers
         var number
         var string
         
-        ; Print four random numbers...
+        ; Print ten random numbers...
         mov counter, 10
         print_random:
         
