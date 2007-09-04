@@ -33,16 +33,16 @@ namespace Agni
             // Methods...
             
                 // Default constructor...
-                CLoader(const string sInputFileName);
+                CLoader(std::string const sInputFileName);
                 
                 // Load source code or throw a const string...
-                list<string> Load() const;
+                std::list<std::string>  Load() const;
         
         // Protected stuff...
         protected:
             
             // Variables...
-            const string    sFileName;
+            std::string const   sFileName;
     };
 }
 

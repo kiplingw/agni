@@ -41,10 +41,10 @@ namespace Agni
             // Methods...
             
                 // Default constructor...
-                CParser(vector<string> &InputSourceCode);
+                CParser(std::vector<std::string> &InputSourceCode);
                 
                 // Generate complete i-code representation of entire source code...
-                void Parse() throw(const string);
+                void Parse() throw(std::string const);
 
         // Protected stuff...
         protected:
@@ -134,7 +134,7 @@ namespace Agni
                 
                 // Function name is a tuple of its identifier and parameter count...
     //            typedef pair<string, uint8>             FunctionName;
-                typedef string                          FunctionName;
+                typedef std::string                     FunctionName;
 
                 // Instruction list index...
                 typedef uint32                          InstructionListIndex;
@@ -158,7 +158,8 @@ namespace Agni
                 };
 
                 // Variable name is a tuple of its identifier and scope...
-                typedef pair<string, IdentifierScope>   VariableName;
+                typedef std::pair<std::string, IdentifierScope>
+                                                        VariableName;
                 
                 // Variable table index...
                 typedef uint32                          VariableTableIndex;
@@ -212,10 +213,10 @@ namespace Agni
                 typedef struct
                 {
                     // The instruction operation code...
-                    ICodeOperationCode  OperationCode;
+                    ICodeOperationCode      OperationCode;
                     
                     // The variable list of operands...
-                    list<ICodeOperand>  OperandList;
+                    std::list<ICodeOperand> OperandList;
                     
                 }ICodeInstruction;
                 
@@ -245,7 +246,7 @@ namespace Agni
                         ICodeInstruction        Instruction;
                         
                         // Line of the original source code or something else...
-                        string                  sAnnotation;
+                        std::string             sAnnotation;
                         
                         // Jump target index...
                         InstructionListIndex    JumpTargetIndex;
@@ -282,7 +283,7 @@ namespace Agni
                         boolean                 bIsHostFunction;
 
                         // Function's i-code list...
-                        list<ICodeNode>         ICodeList;
+                        std::list<ICodeNode>    ICodeList;
 
                     // Private stuff...
                     private:
@@ -339,95 +340,99 @@ namespace Agni
                 void AddFloatICodeOperand(IdentifierScope FunctionIndex, 
                                           InstructionListIndex InstructionIndex,
                                           float32 fFloatOperand) 
-                    throw(const string);
+                    throw(std::string const);
 
                 // Add a function or throw an error...
                 IdentifierScope AddFunction(FunctionName Name, 
                                             boolean bIsHostFunction) 
-                    throw(const string);
+                    throw(std::string const);
 
                 // Add a line of source code or something else into the i-code for human...
                 void AddICodeAnnotation(IdentifierScope FunctionIndex, 
-                                        const string sAnnotation)
-                    throw(const string);
+                                        std::string const sAnnotation)
+                    throw(std::string const);
 
                 // Add i-code instruction to end of function, return index, or throw error...
                 InstructionListIndex 
                     AddICodeInstruction(IdentifierScope FunctionIndex, 
                                         ICodeOperationCode OperationCode)
-                    throw(const string);
+                    throw(std::string const);
 
                 // Add a jump target to the i-code... (not an operand, but the target itself)
                 void AddICodeJumpTarget(IdentifierScope FunctionIndex,
                                         InstructionListIndex JumpTargetIndex)
-                    throw(const string);
+                    throw(std::string const);
 
                 // Add i-code instruction's operand...
                 void AddICodeOperand(IdentifierScope FunctionIndex, 
                                      InstructionListIndex InstructionIndex,
                                      ICodeOperand Operand) 
-                    throw(const string);
+                    throw(std::string const);
 
                 // Add integer operand to i-code instruction...
                 void AddIntegerICodeOperand(IdentifierScope FunctionIndex, 
                                             InstructionListIndex InstructionIndex,
                                             int32 nIntegerOperand) 
-                    throw(const string);
+                    throw(std::string const);
 
                 // Add a jump target operand to i-code instruction...
                 void AddJumpTargetICodeOperand(IdentifierScope FunctionIndex,
                                                InstructionListIndex InstructionIndex,
                                                InstructionListIndex JumpTargetIndex)
-                    throw(const string);
+                    throw(std::string const);
 
                 // Add register operand to i-code instruction...
                 void AddRegisterICodeOperand(IdentifierScope FunctionIndex,
                                              InstructionListIndex InstructionIndex,
                                              ICodeRegister Register) 
-                    throw(const string);
+                    throw(std::string const);
 
                 // Add string operand to i-code instruction...
                 void AddStringICodeOperand(IdentifierScope FunctionIndex, 
                                            InstructionListIndex InstructionIndex,
                                            StringTableIndex StringIndex) 
-                    throw(const string);
+                    throw(std::string const);
 
                 // Add a variable or throw an error...
                 uint32 AddVariable(VariableName Name, uint32 unSize, 
                                    CVariable::IdentifierType Type) 
-                    throw (const string);
+                    throw(std::string const);
 
                 // Add variable operand to i-code instruction...
                 void AddVariableICodeOperand(IdentifierScope FunctionIndex, 
                                              InstructionListIndex InstructionIndex,
                                              VariableTableIndex VariableIndex) 
-                    throw(const string);
-            
+                    throw(std::string const);
+
                 // Get function via index, or throw an error...
                 CFunction &GetFunctionByIndex(IdentifierScope Index) 
-                    const throw(const string);
+                    const throw(std::string const);
 
                 // Get function via name, or throw an error...
-                CFunction &GetFunctionByName(FunctionName Name) throw(const string);
+                CFunction &GetFunctionByName(FunctionName Name) 
+                    throw(std::string const);
 
                 // Get an i-code node from within a function at the specified instruction...
                 ICodeNode &
-                    GetICodeNodeByImplicitIndex(IdentifierScope FunctionIndex, 
-                                                InstructionListIndex InstructionIndex) 
-                    const throw(const string);
+                    GetICodeNodeByImplicitIndex(
+                        IdentifierScope FunctionIndex, 
+                        InstructionListIndex InstructionIndex) 
+                    const throw(std::string const);
 
                 // Get the next jump target index...
                 InstructionListIndex GetNextJumpTargetIndex();
 
                 // Get variable by name, or throw an error...
-                CVariable &GetVariableByName(VariableName Name) throw(const string);
+                CVariable &GetVariableByName(VariableName Name) 
+                    throw(std::string const);
                 
                 // Get variable by index, or throw an error...
                 CVariable &GetVariableByIndex(VariableTableIndex Index) 
-                    const throw(const string);
+                    const throw(std::string const);
 
                 // Get size of variable using name as key...
-                uint32 GetVariableSize(VariableName Name) throw(const string);
+                uint32 GetVariableSize(VariableName Name) 
+                    throw(std::string const);
 
                 // Is this a function in the function table?
                 boolean IsFunctionInTable(FunctionName Name) const;
@@ -444,53 +449,55 @@ namespace Agni
                     const CLexer::Operator CandidateOperator) const;
 
                 // Parse the various valid forms of token sequences...
-                void ParseAssignment() throw(const string);
-                void ParseBreak() throw(const string);
-                void ParseCodeBlock() throw(const string);
-                void ParseContinue() throw(const string);
-                void ParseExpression() throw(const string);
-                void ParseFor() throw(const string);
-                void ParseFunction() throw(const string);
-                void ParseFunctionCall() throw(const string);
-                void ParseHost() throw(const string);
-                void ParseIf() throw(const string);
-                void ParseReturn() throw(const string);
-                void ParseSubExpression() throw(const string);
-                void ParseStatement() throw(const string);
-                void ParseVariable() throw(const string);
-                void ParseWhile() throw(const string);
+                void ParseAssignment() throw(std::string const);
+                void ParseBreak() throw(std::string const);
+                void ParseCodeBlock() throw(std::string const);
+                void ParseContinue() throw(std::string const);
+                void ParseExpression() throw(std::string const);
+                void ParseFor() throw(std::string const);
+                void ParseFunction() throw(std::string const);
+                void ParseFunctionCall() throw(std::string const);
+                void ParseHost() throw(std::string const);
+                void ParseIf() throw(std::string const);
+                void ParseReturn() throw(std::string const);
+                void ParseSubExpression() throw(std::string const);
+                void ParseStatement() throw(std::string const);
+                void ParseVariable() throw(std::string const);
+                void ParseWhile() throw(std::string const);
 
                 // Read a token and verify it is what was expected...
-                void ReadToken(const CLexer::Token Expected) throw(const string);
+                void ReadToken(const CLexer::Token Expected) 
+                    throw(std::string const);
 
             // Variables...
                 
                 // Source code vector...
-                vector<string>                         &SourceCode;
+                std::vector<std::string>               &SourceCode;
                 
                 // Lexer...
                 CLexer                                  Lexer;
                 
                 // Loop stack...
-                stack<Loop>                             LoopStack;
+                std::stack<Loop>                        LoopStack;
                 
                 // Current scope...
                 IdentifierScope                         CurrentScope;
                 
                 // Function table... (<identifier, #params> key)
-                map<FunctionName, CFunction>            FunctionTable_KeyByName;
+                std::map<FunctionName, CFunction>       FunctionTable_KeyByName;
                 
                 // Function table with indices as keys...
-                map<IdentifierScope, CFunction *>       FunctionTable_KeyByIndex;
+                std::map<IdentifierScope, CFunction *>  FunctionTable_KeyByIndex;
                 
                 // Variable table... (<identifier, scope> key)
-                map<VariableName, CVariable>            VariableTable_KeyByName;
+                std::map<VariableName, CVariable>       VariableTable_KeyByName;
                 
                 // Variable table with indices as keys... (<index> key)
-                map<VariableTableIndex, CVariable *>    VariableTable_KeyByIndex;
+                std::map<VariableTableIndex, CVariable *>
+                    VariableTable_KeyByIndex;
                 
                 // String table...
-                set<string>                             StringTable;
+                std::set<std::string>                   StringTable;
 
                 // Script's main header...
                 Agni_MainHeader                         MainHeader;

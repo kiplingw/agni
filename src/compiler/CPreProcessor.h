@@ -40,11 +40,11 @@ namespace Agni
             // Methods...
             
                 // Default constructor...
-                CPreProcessor(const string sInputRootPath, 
-                              const list<string> InputSourceCodeLinkedList);
+                CPreProcessor(std::string const sInputRootPath, 
+                              std::list<std::string> const InputSourceCodeLinkedList);
                 
                 // Process source code linked list and produce final vector form...
-                vector<string> Process();
+                std::vector<std::string> Process();
 
         // Protected stuff...
         protected:
@@ -52,10 +52,10 @@ namespace Agni
             // Variables...
             
                 // Root path of input...
-                const string        sRootPath;
+                std::string const       sRootPath;
                 
                 // Source code linked list...
-                list<string>        SourceCodeLinkedList;
+                std::list<std::string>  SourceCodeLinkedList;
     };
 }
 

@@ -164,7 +164,7 @@ namespace Agni
             // Methods...
 
                 // Create a lexer from a source code vector...
-                CLexer(const vector<string> &UserSourceCode);
+                CLexer(const std::vector<std::string> &UserSourceCode);
 
                 // Get the current line starting from one...
                 uint32                  GetCurrentHumanLineIndex() const;
@@ -176,13 +176,14 @@ namespace Agni
                 Operator                GetCurrentOperator() const;
                 
                 // Get the current lexeme...
-                const string           &GetCurrentLexeme();
+                std::string const      &GetCurrentLexeme();
                 
                 // Copy the current lexeme...
-                void                    GetCurrentLexeme(string &sLexeme) const;
+                void                    GetCurrentLexeme(std::string &sLexeme) 
+                    const;
 
                 // Get the current source line...
-                const string           &GetCurrentSourceLine() const;
+                const std::string      &GetCurrentSourceLine() const;
 
                 // Get the first character of the next token...
                 char                    GetLookAheadCharacter();
@@ -191,13 +192,13 @@ namespace Agni
                 Token                   GetNextToken();
                 
                 // Get the next token as a string...
-                const string            GetNextTokenAsString();
+                std::string const       GetNextTokenAsString();
                 
                 // Get the current token...
                 Token                   GetCurrentToken() const;
                 
                 // Get the current token as a string...
-                const string            GetCurrentTokenAsString() const;
+                std::string const       GetCurrentTokenAsString() const;
 
                 // Initialize lexer state from another's...
                 CLexer                 &operator=(const CLexer &SourceLexer);
@@ -209,8 +210,8 @@ namespace Agni
                 void                    Rewind();
 
                 // Converts a token into a human readable string...
-                const string            TokenToString(const Token token) const;
-                
+                const std::string       TokenToString(const Token token) const;
+
                 // Deconstructor...
                ~CLexer();
         
@@ -271,31 +272,31 @@ namespace Agni
             // Variables...
 
                 // Current line...
-                uint32                      unCurrentLine;
+                uint32                          unCurrentLine;
 
                 // Source code...
-                std::vector<string> const  &SourceCode;
+                std::vector<std::string> const &SourceCode;
 
                 // Current token...
-                Token                       CurrentToken;
+                Token                           CurrentToken;
 
                 // Current lexeme...
-                string                      sCurrentLexeme;
+                std::string                     sCurrentLexeme;
 
                 // Current lexeme start and end indices...
-                uint32                      unCurrentLexemeStart;
-                uint32                      unCurrentLexemeEnd;
+                uint32                          unCurrentLexemeStart;
+                uint32                          unCurrentLexemeEnd;
 
                 // Current operator...
-                Operator                    CurrentOperator;
+                Operator                        CurrentOperator;
 
                 // Previous lexer state...
-                uint32                      Backup_unCurrentLine;
-                Token                       Backup_CurrentToken;
-                string                      Backup_sCurrentLexeme;
-                uint32                      Backup_unCurrentLexemeStart;
-                uint32                      Backup_unCurrentLexemeEnd;
-                Operator                    Backup_CurrentOperator;
+                uint32                          Backup_unCurrentLine;
+                Token                           Backup_CurrentToken;
+                std::string                     Backup_sCurrentLexeme;
+                uint32                          Backup_unCurrentLexemeStart;
+                uint32                          Backup_unCurrentLexemeEnd;
+                Operator                        Backup_CurrentOperator;
 
             // Methods...
 

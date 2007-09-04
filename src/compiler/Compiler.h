@@ -144,15 +144,15 @@ namespace Agni
             // Methods...
 
                 // Be verbose, if appropriate...
-                void Verbose(const string sMessage) const;
+                void Verbose(std::string const sMessage) const;
 
             // Variables...
 
                 // Compiler interface parameters...
-                Parameters              UserParameters;
+                Parameters                  UserParameters;
                 
                 // Source code listing...
-                vector<string>          SourceCode;
+                std::vector<std::string>    SourceCode;
     };
 }
 

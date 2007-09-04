@@ -11,27 +11,27 @@
 using namespace Agni;
 
 // Default constructor...
-CLoader::CLoader(const string sInputFileName)
+CLoader::CLoader(std::string const sInputFileName)
     : sFileName(sInputFileName)
 {
 
 }
 
 // Load source code or throw a const string...
-list<string> CLoader::Load() const
+std::list<std::string> CLoader::Load() const
 {
     // Variables...
-    FILE           *hFile                   = NULL;
-    char            cCharacterRead          = '\x0';
-    string          sCurrentLine;
-    list<string>    SourceCodeLinkedList;
+    FILE                   *hFile                   = NULL;
+    char                    cCharacterRead          = '\x0';
+    std::string             sCurrentLine;
+    std::list<std::string>  SourceCodeLinkedList;
     
     // Open the input file...
     hFile = fopen(sFileName.c_str(), "r");
 
         // Failed to open file...
         if(!hFile)
-            throw string("cannot read from \"" + sFileName + "\"");
+            throw std::string("cannot read from \"" + sFileName + "\"");
 
     // Keep reading characters until we hit the end of the file...
     while(EOF != (cCharacterRead = fgetc(hFile)))
@@ -77,3 +77,4 @@ list<string> CLoader::Load() const
     return SourceCodeLinkedList;
     
 }
+

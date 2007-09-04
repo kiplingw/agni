@@ -69,7 +69,7 @@ using namespace Agni;
             {'=', 0, 0, OPERATOR_ASSIGNMENT_BITWISE_SHIFT_RIGHT}};   // >>=
 
 // Create a lexer from a source code vector...
-CLexer::CLexer(const vector<string> &UserSourceCode)
+CLexer::CLexer(std::vector<std::string> const &UserSourceCode)
     : unCurrentLine(0), 
       SourceCode(UserSourceCode),
       CurrentToken(TOKEN_INVALID),
@@ -109,14 +109,14 @@ uint32 CLexer::GetCurrentHumanLineIndex() const
 }
 
 // Get the current lexeme...
-const string &CLexer::GetCurrentLexeme()
+const std::string &CLexer::GetCurrentLexeme()
 {
     // Return it...
     return sCurrentLexeme;
 }
 
 // Copy the current lexeme...
-void CLexer::GetCurrentLexeme(string &sLexeme) const
+void CLexer::GetCurrentLexeme(std::string &sLexeme) const
 {
     // Store lexeme string for caller...
     sLexeme = sCurrentLexeme;
@@ -130,7 +130,7 @@ CLexer::Token CLexer::GetCurrentToken() const
 }
 
 // Get the current token as a string...
-const string CLexer::GetCurrentTokenAsString() const
+const std::string CLexer::GetCurrentTokenAsString() const
 {
     // Return it as a string...
     return TokenToString(CurrentToken);
@@ -151,7 +151,7 @@ CLexer::Operator CLexer::GetCurrentOperator() const
 }
 
 // Get the current source line...
-const string &CLexer::GetCurrentSourceLine() const
+const std::string &CLexer::GetCurrentSourceLine() const
 {
     // Return it...
     return SourceCode.at(unCurrentLine);
@@ -161,7 +161,7 @@ const string &CLexer::GetCurrentSourceLine() const
 char CLexer::GetNextCharacter()
 {
     // Variables...
-    string  sCurrentLine;
+    std::string sCurrentLine;
 
     // Have we reached the end of the source code? Alert lexer...
     if(unCurrentLine == SourceCode.size())
@@ -676,7 +676,7 @@ CLexer::Token CLexer::GetNextToken()
 }
 
 // Get the next token as a string...
-const string CLexer::GetNextTokenAsString()
+const std::string CLexer::GetNextTokenAsString()
 {
     // Get the next token...
     return TokenToString(GetNextToken());
@@ -925,70 +925,70 @@ void CLexer::Rewind()
 }
 
 // Converts a token into a human readable string...
-const string CLexer::TokenToString(const Token token) const
+const std::string CLexer::TokenToString(const Token token) const
 {
     // Convert to string...
     switch(token)
     {
         // Basic tokens...
-        case TOKEN_END_OF_STREAM: return string("___end_of_stream___");
-        case TOKEN_INVALID: return string("___invalid___");
-        case TOKEN_INTEGER: return string("integer");
-        case TOKEN_FLOAT: return string("float");
-        case TOKEN_IDENTIFIER: return string("identifier");
+        case TOKEN_END_OF_STREAM: return std::string("___end_of_stream___");
+        case TOKEN_INVALID: return std::string("___invalid___");
+        case TOKEN_INTEGER: return std::string("integer");
+        case TOKEN_FLOAT: return std::string("float");
+        case TOKEN_IDENTIFIER: return std::string("identifier");
         
         // Reserved keywords...
-        case TOKEN_RESERVED_VAR: return string("var");
-        case TOKEN_RESERVED_TRUE: return string("true");
-        case TOKEN_RESERVED_FALSE: return string("false");
-        case TOKEN_RESERVED_IF: return string("if");
-        case TOKEN_RESERVED_ELSE: return string("else");
-        case TOKEN_RESERVED_BREAK: return string("break");
-        case TOKEN_RESERVED_CONTINUE: return string("continue");
-        case TOKEN_RESERVED_FOR: return string("for");
-        case TOKEN_RESERVED_WHILE: return string("while");
-        case TOKEN_RESERVED_FUNC: return string("func");
-        case TOKEN_RESERVED_RETURN: return string("return");
-        case TOKEN_RESERVED_HOST: return string("host");
+        case TOKEN_RESERVED_VAR: return std::string("var");
+        case TOKEN_RESERVED_TRUE: return std::string("true");
+        case TOKEN_RESERVED_FALSE: return std::string("false");
+        case TOKEN_RESERVED_IF: return std::string("if");
+        case TOKEN_RESERVED_ELSE: return std::string("else");
+        case TOKEN_RESERVED_BREAK: return std::string("break");
+        case TOKEN_RESERVED_CONTINUE: return std::string("continue");
+        case TOKEN_RESERVED_FOR: return std::string("for");
+        case TOKEN_RESERVED_WHILE: return std::string("while");
+        case TOKEN_RESERVED_FUNC: return std::string("func");
+        case TOKEN_RESERVED_RETURN: return std::string("return");
+        case TOKEN_RESERVED_HOST: return std::string("host");
         
         // An operator...
-        case TOKEN_OPERATOR: return string("operator");
+        case TOKEN_OPERATOR: return std::string("operator");
         
         // Delimiters...
-        case TOKEN_DELIMITER_COMMA: return string(",");
-        case TOKEN_DELIMITER_OPEN_PARENTHESIS: return string("(");
-        case TOKEN_DELIMITER_CLOSE_PARENTHESIS: return string(")");
+        case TOKEN_DELIMITER_COMMA: return std::string(",");
+        case TOKEN_DELIMITER_OPEN_PARENTHESIS: return std::string("(");
+        case TOKEN_DELIMITER_CLOSE_PARENTHESIS: return std::string(")");
 
-        case TOKEN_DELIMITER_OPEN_BRACE: return string("[");
-        case TOKEN_DELIMITER_CLOSE_BRACE: return string("]");
+        case TOKEN_DELIMITER_OPEN_BRACE: return std::string("[");
+        case TOKEN_DELIMITER_CLOSE_BRACE: return std::string("]");
 
-        case TOKEN_DELIMITER_OPEN_CURLY_BRACE: return string("{");
-        case TOKEN_DELIMITER_CLOSE_CURLY_BRACE: return string("}");
-        case TOKEN_DELIMITER_SEMICOLON: return string(";");
+        case TOKEN_DELIMITER_OPEN_CURLY_BRACE: return std::string("{");
+        case TOKEN_DELIMITER_CLOSE_CURLY_BRACE: return std::string("}");
+        case TOKEN_DELIMITER_SEMICOLON: return std::string(";");
         
         // String...
-        case TOKEN_STRING: return string("string");
+        case TOKEN_STRING: return std::string("string");
 
         // Macro definitions...
-        case TOKEN_PREPROCESSOR_DEFINE: return string("#define");
-        case TOKEN_PREPROCESSOR_UNDEF: return string("#undef");
+        case TOKEN_PREPROCESSOR_DEFINE: return std::string("#define");
+        case TOKEN_PREPROCESSOR_UNDEF: return std::string("#undef");
         
         // Conditional inclusion...
-        case TOKEN_PREPROCESSOR_IFDEF: return string("#ifdef");
-        case TOKEN_PREPROCESSOR_IFNDEF: return string("#ifndef");
-        case TOKEN_PREPROCESSOR_IF: return string("#if");
-        case TOKEN_PREPROCESSOR_ENDIF: return string("#endif");
-        case TOKEN_PREPROCESSOR_ELSE: return string("#else");
-        case TOKEN_PREPROCESSOR_ELIF: return string("#elif");
+        case TOKEN_PREPROCESSOR_IFDEF: return std::string("#ifdef");
+        case TOKEN_PREPROCESSOR_IFNDEF: return std::string("#ifndef");
+        case TOKEN_PREPROCESSOR_IF: return std::string("#if");
+        case TOKEN_PREPROCESSOR_ENDIF: return std::string("#endif");
+        case TOKEN_PREPROCESSOR_ELSE: return std::string("#else");
+        case TOKEN_PREPROCESSOR_ELIF: return std::string("#elif");
         
         // Error directive...
-        case TOKEN_PREPROCESSOR_ERROR: return string("#error");
+        case TOKEN_PREPROCESSOR_ERROR: return std::string("#error");
         
         // Source file inclusion...
-        case TOKEN_PREPROCESSOR_INCLUDE: return string("#include");
+        case TOKEN_PREPROCESSOR_INCLUDE: return std::string("#include");
 
         // Unhandled token...
-        default: return string("___unknown_token___");
+        default: return std::string("___unknown_token___");
     }
 }
 
@@ -997,3 +997,4 @@ CLexer::~CLexer()
 {
 
 }
+

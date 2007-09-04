@@ -12,8 +12,9 @@
 using namespace Agni;
 
 // Default constructor...
-CPreProcessor::CPreProcessor(const string sInputRootPath, 
-                             const list<string> InputSourceCodeLinkedList)
+CPreProcessor::CPreProcessor(
+    std::string const sInputRootPath, 
+    std::list<std::string> const InputSourceCodeLinkedList)
     : sRootPath(sInputRootPath),
       SourceCodeLinkedList(InputSourceCodeLinkedList)
 {
@@ -21,16 +22,16 @@ CPreProcessor::CPreProcessor(const string sInputRootPath,
 }
 
 // Process source code linked list and produce final vector form...
-vector<string> CPreProcessor::Process()
+std::vector<std::string> CPreProcessor::Process()
 {
     // Variables and objects...
-    list<string>::iterator  ListIterator;
-    unsigned int            unLine                      = 0;
-    bool                    bWithinBlockComment         = false;
-    bool                    bWithinString               = false;
-    string                  sFileName;
-    list<string>            NewSourceCodeLinkedList;
-    vector<string>          NewSourceCode;
+    std::list<std::string>::iterator    ListIterator;
+    unsigned int                        unLine                      = 0;
+    bool                                bWithinBlockComment         = false;
+    bool                                bWithinString               = false;
+    std::string                         sFileName;
+    std::list<std::string>              NewSourceCodeLinkedList;
+    std::vector<std::string>            NewSourceCode;
 
     // Try to pre-process our script...
     try
@@ -41,7 +42,7 @@ vector<string> CPreProcessor::Process()
           ++ListIterator, ++unLine)
         {
             // Extract line...
-            string &sCurrentLine = *ListIterator;
+            std::string &sCurrentLine = *ListIterator;
 
             // Scan through each character...
             for(unsigned int unCharacterIndex = 0;
@@ -104,15 +105,16 @@ vector<string> CPreProcessor::Process()
           ++ListIterator, ++unLine)
         {
             // Extract line and create a vector from it for lexer...
-            string &sCurrentLine = *ListIterator;
-            vector<string> SingleLineVector;
+            std::string &sCurrentLine = *ListIterator;
+            std::vector<std::string> SingleLineVector;
             SingleLineVector.push_back(sCurrentLine);
 
             // Create a lexer to process the single line...
             CLexer PreProcessorLexer(SingleLineVector);
    
             // Keep looking for directives until we reach the end...
-            while(CLexer::TOKEN_END_OF_STREAM != PreProcessorLexer.GetNextToken())
+            while(CLexer::TOKEN_END_OF_STREAM != 
+                  PreProcessorLexer.GetNextToken())
             {
                 // #include detected...
                 if(PreProcessorLexer.GetCurrentToken() 
@@ -122,7 +124,7 @@ vector<string> CPreProcessor::Process()
 
                         // Verify the next token is indeed the path...                
                         if(PreProcessorLexer.GetNextToken() != CLexer::TOKEN_STRING)
-                            throw string("bad #include usage");
+                            throw std::string("bad #include usage");
 
                         // Grab the filename...
                         sFileName = PreProcessorLexer.GetCurrentLexeme();
@@ -146,7 +148,8 @@ vector<string> CPreProcessor::Process()
                     sCurrentLine = "\n";
 
                     // Insert the included source where the directive was found...
-                    SourceCodeLinkedList.insert(ListIterator, NewSourceCode.begin(), 
+                    SourceCodeLinkedList.insert(ListIterator, 
+                                                NewSourceCode.begin(), 
                                                 NewSourceCode.end());
                 }
             }
@@ -154,10 +157,10 @@ vector<string> CPreProcessor::Process()
     }
 
         // Pre-processing failed for some reason...
-        catch(const string sReason)
+        catch(std::string const sReason)
         {
             // Generate partial, though useful, error message...
-            ostringstream StringStream;
+            std::ostringstream StringStream;
             StringStream << unLine << ": " << sReason;
 
             // Pass message to compiler's higher level exception handler...
@@ -165,9 +168,10 @@ vector<string> CPreProcessor::Process()
         }
 
     // Convert linked list to finalized vector...
-    vector<string> SourceCodeVector(SourceCodeLinkedList.begin(),
-                                    SourceCodeLinkedList.end());
+    std::vector<std::string> SourceCodeVector(SourceCodeLinkedList.begin(),
+                                              SourceCodeLinkedList.end());
 
     // Return the fully processed source code, ready for parsing...
     return SourceCodeVector;
 }
+

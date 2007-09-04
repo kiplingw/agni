@@ -22,7 +22,7 @@ using namespace Agni;
         CParser::CVariable::NextAvailableVariableIndex = 1;
 
 // Default constructor...
-CParser::CParser(vector<string> &InputSourceCode)
+CParser::CParser(std::vector<std::string> &InputSourceCode)
     : SourceCode(InputSourceCode),
       Lexer(InputSourceCode),
       CurrentJumpTargetIndex(0)
@@ -32,9 +32,10 @@ CParser::CParser(vector<string> &InputSourceCode)
 }
 
 // Add float operand to i-code instruction...
-void CParser::AddFloatICodeOperand(IdentifierScope FunctionIndex,
-                                   InstructionListIndex InstructionIndex,
-                                   float32 fFloatOperand) throw(const string)
+void CParser::AddFloatICodeOperand(
+    IdentifierScope FunctionIndex, 
+    InstructionListIndex InstructionIndex,
+    float32 fFloatOperand) throw(std::string const)
 {
     // Variables...
     ICodeOperand    Operand;
@@ -50,7 +51,7 @@ void CParser::AddFloatICodeOperand(IdentifierScope FunctionIndex,
 // Add a function or throw an error...
 CParser::IdentifierScope CParser::AddFunction(FunctionName Name,
                                               boolean bIsHostFunction)
-    throw(const string)
+    throw(std::string const)
 {
     // Check to see if function is already in function table...
     if(FunctionTable_KeyByName.find(Name) != FunctionTable_KeyByName.end())
@@ -65,8 +66,8 @@ CParser::IdentifierScope CParser::AddFunction(FunctionName Name,
         FunctionTable_KeyByName.insert(make_pair(Name, NewFunction));
 
         // Also add this to our other function table using the index as key...
-        FunctionTable_KeyByIndex.insert(make_pair(NewFunction.GetIndex(), 
-                                                  &NewFunction));
+        FunctionTable_KeyByIndex.insert(
+            std::make_pair(NewFunction.GetIndex(), &NewFunction));
 
     // Return the new function's index...
     return NewFunction.GetIndex();
@@ -74,8 +75,8 @@ CParser::IdentifierScope CParser::AddFunction(FunctionName Name,
 
 // Add a line of source code or something else into the i-code for human...
 void CParser::AddICodeAnnotation(IdentifierScope FunctionIndex, 
-                                 const string sAnnotation)
-    throw(const string)
+                                 std::string const sAnnotation)
+    throw(std::string const)
 {
     // Locate the function...
     CFunction &Function = GetFunctionByIndex(FunctionIndex);
@@ -92,7 +93,7 @@ void CParser::AddICodeAnnotation(IdentifierScope FunctionIndex,
 // Add i-code instruction to end of function, return index, or throw error...
 CParser::InstructionListIndex CParser::AddICodeInstruction(
     IdentifierScope FunctionIndex, ICodeOperationCode OperationCode)
-    throw(const string)
+    throw(std::string const)
 {
     // Variables...
     ICodeNode           Node;
@@ -117,7 +118,7 @@ CParser::InstructionListIndex CParser::AddICodeInstruction(
 // Add a jump target to the i-code... (not an operand, but the target itself)
 void CParser::AddICodeJumpTarget(IdentifierScope FunctionIndex,
                                  InstructionListIndex JumpTargetIndex)
-    throw(const string)
+    throw(std::string const)
 {
     // Variables...
     ICodeNode           Node;
@@ -138,7 +139,7 @@ void CParser::AddICodeJumpTarget(IdentifierScope FunctionIndex,
 // Add i-code instruction's operand...
 void CParser::AddICodeOperand(IdentifierScope FunctionIndex,
                               InstructionListIndex InstructionIndex,
-                              ICodeOperand Operand) throw(const string)
+                              ICodeOperand Operand) throw(std::string const)
 {
     // Find the node...
     ICodeNode &Node = GetICodeNodeByImplicitIndex(FunctionIndex,
@@ -155,7 +156,8 @@ void CParser::AddICodeOperand(IdentifierScope FunctionIndex,
 // Add integer operand to i-code instruction...
 void CParser::AddIntegerICodeOperand(IdentifierScope FunctionIndex,
                                      InstructionListIndex InstructionIndex,
-                                     int32 nIntegerOperand) throw(const string)
+                                     int32 nIntegerOperand) 
+    throw(std::string const)
 {
     // Variables...
     ICodeOperand    Operand;
@@ -172,7 +174,7 @@ void CParser::AddIntegerICodeOperand(IdentifierScope FunctionIndex,
 void CParser::AddJumpTargetICodeOperand(IdentifierScope FunctionIndex,
                                         InstructionListIndex InstructionIndex,
                                         InstructionListIndex JumpTargetIndex)
-    throw(const string)
+    throw(std::string const)
 {
     // Variables...
     ICodeOperand    Operand;
@@ -189,7 +191,7 @@ void CParser::AddJumpTargetICodeOperand(IdentifierScope FunctionIndex,
 void CParser::AddRegisterICodeOperand(IdentifierScope FunctionIndex,
                                       InstructionListIndex InstructionIndex,
                                       ICodeRegister Register) 
-    throw(const string)
+    throw(std::string const)
 {
     // Variables...
     ICodeOperand    Operand;
@@ -206,7 +208,7 @@ void CParser::AddRegisterICodeOperand(IdentifierScope FunctionIndex,
 void CParser::AddStringICodeOperand(IdentifierScope FunctionIndex,
                                     InstructionListIndex InstructionIndex,
                                     StringTableIndex StringIndex) 
-    throw(const string)
+    throw(std::string const)
 {
     // Variables...
     ICodeOperand    Operand;
@@ -223,7 +225,7 @@ void CParser::AddStringICodeOperand(IdentifierScope FunctionIndex,
 void CParser::AddVariableICodeOperand(IdentifierScope FunctionIndex,
                                       InstructionListIndex InstructionIndex,
                                       VariableTableIndex VariableIndex) 
-    throw(const string)
+    throw(std::string const)
 {
     // Variables...
     ICodeOperand    Operand;
@@ -240,7 +242,7 @@ void CParser::AddVariableICodeOperand(IdentifierScope FunctionIndex,
 CParser::VariableTableIndex CParser::AddVariable(VariableName Name,
                                                  uint32 unSize,
                                                  CVariable::IdentifierType Type)
-    throw(const string)
+    throw(std::string const)
 {
     // Check if the <identifier, scope> already exist in table...
     if(VariableTable_KeyByName.find(Name) != VariableTable_KeyByName.end())
@@ -252,11 +254,11 @@ CParser::VariableTableIndex CParser::AddVariable(VariableName Name,
         CVariable NewVariable(unSize, Type);
     
         // Add it to the variable table using name as hash key...
-        VariableTable_KeyByName.insert(make_pair(Name, NewVariable));
+        VariableTable_KeyByName.insert(std::make_pair(Name, NewVariable));
         
         // Also add this to our other variable table using index as key...
-        VariableTable_KeyByIndex.insert(make_pair(NewVariable.GetIndex(),
-                                                  &NewVariable));
+        VariableTable_KeyByIndex.insert(
+            std::make_pair(NewVariable.GetIndex(), &NewVariable));
     
     // Return the variable index to caller...
     return NewVariable.GetIndex();
@@ -264,10 +266,10 @@ CParser::VariableTableIndex CParser::AddVariable(VariableName Name,
 
 // Get function via index, or throw an error...
 CParser::CFunction &CParser::GetFunctionByIndex(IdentifierScope Index) 
-    const throw(const string)
+    const throw(std::string const)
 {
     // Variables...
-    map<IdentifierScope, CFunction *>::const_iterator   Location;
+    std::map<IdentifierScope, CFunction *>::const_iterator  Location;
 
     // Find the function...
     Location = FunctionTable_KeyByIndex.find(Index);
@@ -282,10 +284,10 @@ CParser::CFunction &CParser::GetFunctionByIndex(IdentifierScope Index)
 
 // Get function via name, or throw an error...
 CParser::CFunction &CParser::GetFunctionByName(FunctionName Name) 
-    throw(const string)
+    throw(std::string const)
 {
     // Variables...
-    map<FunctionName, CFunction>::iterator    Location;
+    std::map<FunctionName, CFunction>::iterator Location;
 
     // Find the function...
     Location = FunctionTable_KeyByName.find(Name);
@@ -301,7 +303,7 @@ CParser::CFunction &CParser::GetFunctionByName(FunctionName Name)
 // Get an i-code node from within a function at the specified instruction...
 CParser::ICodeNode &CParser::GetICodeNodeByImplicitIndex(
     IdentifierScope FunctionIndex, InstructionListIndex InstructionIndex) 
-    const throw(const string)
+    const throw(std::string const)
 {
     // Variables...
     InstructionListIndex    Index    = 0;
@@ -310,7 +312,7 @@ CParser::ICodeNode &CParser::GetICodeNodeByImplicitIndex(
     CFunction &Function = GetFunctionByIndex(FunctionIndex);
     
     // Seek to index...
-    list<ICodeNode>::iterator Location = Function.ICodeList.begin();
+    std::list<ICodeNode>::iterator Location = Function.ICodeList.begin();
     while(Index != InstructionIndex)
     {
         // Out of bounds...
@@ -335,10 +337,10 @@ CParser::InstructionListIndex CParser::GetNextJumpTargetIndex()
 
 // Get variable via name, or throw an error...
 CParser::CVariable &CParser::GetVariableByName(VariableName Name) 
-    throw(const string)
+    throw(std::string const)
 {
     // Variables...
-    map<VariableName, CVariable>::iterator  Location;
+    std::map<VariableName, CVariable>::iterator Location;
 
     // Find the variable...
     Location = VariableTable_KeyByName.find(Name);
@@ -353,10 +355,10 @@ CParser::CVariable &CParser::GetVariableByName(VariableName Name)
             
 // Get variable by index, or throw an error...
 CParser::CVariable &CParser::GetVariableByIndex(VariableTableIndex Index)
-    const throw(const string)
+    const throw(std::string const)
 {
     // Variables...
-    map<VariableTableIndex, CVariable *>::const_iterator    Location;
+    std::map<VariableTableIndex, CVariable *>::const_iterator   Location;
 
     // Find the variable...
     Location = VariableTable_KeyByIndex.find(Index);
@@ -370,7 +372,7 @@ CParser::CVariable &CParser::GetVariableByIndex(VariableTableIndex Index)
 }
 
 // Get size of variable using <identifier, scope> as key, or throw an error...
-uint32 CParser::GetVariableSize(VariableName Name) throw(const string)
+uint32 CParser::GetVariableSize(VariableName Name) throw(std::string const)
 {
     // Find the variable...
     CVariable &Variable = GetVariableByName(Name);
@@ -383,7 +385,7 @@ uint32 CParser::GetVariableSize(VariableName Name) throw(const string)
 boolean CParser::IsFunctionInTable(FunctionName Name) const
 {
     // Variables...
-    map<FunctionName, CFunction>::const_iterator    Location;
+    std::map<FunctionName, CFunction>::const_iterator   Location;
 
     // Find the function...
     Location = FunctionTable_KeyByName.find(Name);
@@ -400,7 +402,7 @@ boolean CParser::IsFunctionInTable(FunctionName Name) const
 boolean CParser::IsVariableInTable(VariableName Name) const
 {
     // Variables...
-    map<VariableName, CVariable>::const_iterator    Location;
+    std::map<VariableName, CVariable>::const_iterator   Location;
 
     // Find the variable...
     Location = VariableTable_KeyByName.find(Name);
@@ -443,7 +445,7 @@ boolean CParser::IsOperatorRelational(const CLexer::Operator CandidateOperator)
 }
 
 // Generate a complete i-code representation of the entire source code...
-void CParser::Parse() throw(const string)
+void CParser::Parse() throw(std::string const)
 {
     // Reset the lexer...
     Lexer.Reset();
@@ -472,19 +474,19 @@ void CParser::Parse() throw(const string)
 }
 
 // Parse an assignment...
-void CParser::ParseAssignment() throw(const string)
+void CParser::ParseAssignment() throw(std::string const)
 {
 
 }
 
 // Parse a break...
-void CParser::ParseBreak() throw(const string)
+void CParser::ParseBreak() throw(std::string const)
 {
 
 }
 
 // Parse a code block...
-void CParser::ParseCodeBlock() throw(const string)
+void CParser::ParseCodeBlock() throw(std::string const)
 {
     // Code blocks cannot exist in the global scope...
     if(CurrentScope == Global)
@@ -499,13 +501,13 @@ void CParser::ParseCodeBlock() throw(const string)
 }
 
 // Parse continue...
-void CParser::ParseContinue() throw(const string)
+void CParser::ParseContinue() throw(std::string const)
 {
 
 }
 
 // Parse an expression...
-void CParser::ParseExpression() throw(const string)
+void CParser::ParseExpression() throw(std::string const)
 {
     // Variables...
     InstructionListIndex    InstructionIndex    = 0;
@@ -671,13 +673,13 @@ void CParser::ParseExpression() throw(const string)
 }
 
 // Parse for loop...
-void CParser::ParseFor() throw(const string)
+void CParser::ParseFor() throw(std::string const)
 {
 
 }
 
 // Parse a function definition...
-void CParser::ParseFunction() throw(const string)
+void CParser::ParseFunction() throw(std::string const)
 {
     // No nested functions permitted...
     if(CurrentScope != Global)
@@ -701,7 +703,7 @@ void CParser::ParseFunction() throw(const string)
             throw "entry point cannot accept parameters (yet)";
 
         // Create a stack to store the parameters, reading them left to right...
-        stack<string>   ParametersLeftToRight;
+        std::stack<std::string> ParametersLeftToRight;
         for(;;)
         {
             // Read a parameter...
@@ -742,13 +744,13 @@ void CParser::ParseFunction() throw(const string)
 }
 
 // Parse a function invokation...
-void CParser::ParseFunctionCall() throw(const string)
+void CParser::ParseFunctionCall() throw(std::string const)
 {
 
 }
 
 // Parse a host function import...
-void CParser::ParseHost() throw(const string)
+void CParser::ParseHost() throw(std::string const)
 {
     // The next token after "host" should be the function identifier...
     ReadToken(CLexer::TOKEN_IDENTIFIER);
@@ -768,19 +770,19 @@ void CParser::ParseHost() throw(const string)
 }
 
 // Parse an if block...
-void CParser::ParseIf() throw(const string)
+void CParser::ParseIf() throw(std::string const)
 {
 
 }
 
 // Parse a function return...
-void CParser::ParseReturn() throw(const string)
+void CParser::ParseReturn() throw(std::string const)
 {
 
 }
 
 // Parse a statement...
-void CParser::ParseStatement() throw(const string)
+void CParser::ParseStatement() throw(std::string const)
 {
     // Recursion base case: Are we done with the statement?
     if(Lexer.GetLookAheadCharacter() == ';')
@@ -910,19 +912,19 @@ void CParser::ParseStatement() throw(const string)
 }
 
 // Parse a sub expression...
-void CParser::ParseSubExpression() throw(const string)
+void CParser::ParseSubExpression() throw(std::string const)
 {
 
 }
 
 // Parse a variable / array declaration...
-void CParser::ParseVariable() throw(const string)
+void CParser::ParseVariable() throw(std::string const)
 {
     // Make sure we are hovering over an identifier now...
     ReadToken(CLexer::TOKEN_IDENTIFIER);
     
     // Remember the identifier...
-    string sIdentifier = Lexer.GetCurrentLexeme();
+    std::string sIdentifier = Lexer.GetCurrentLexeme();
     
     // For now, assume the variable size to be one...
     uint32 unSize = 1;
@@ -954,13 +956,13 @@ void CParser::ParseVariable() throw(const string)
     ReadToken(CLexer::TOKEN_DELIMITER_SEMICOLON);
 }
 
-void CParser::ParseWhile() throw(const string)
+void CParser::ParseWhile() throw(std::string const)
 {
 
 }
 
 // Read a token and verify it is what was expected...
-void CParser::ReadToken(const CLexer::Token Expected) throw(const string)
+void CParser::ReadToken(const CLexer::Token Expected) throw(std::string const)
 {
     // Get the next token...
     CLexer::Token Received = Lexer.GetNextToken();

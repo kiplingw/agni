@@ -5,6 +5,10 @@
                 the whole system...
 */
 
+// Multiple include protection...
+#ifndef _AGNICOMMONDEFINITIONS_H_
+#define _AGNICOMMONDEFINITIONS_H_
+
 // Includes...
 
     // Cross platform types...
@@ -39,7 +43,7 @@ namespace Agni
     // Structures found in the Agni executables...
 
         // Main header...
-        typedef struct AGNI_ATTRIBUTE_PACKED
+        typedef struct ATTRIBUTE_PACKED
         {
             // Agni executable signature...
             char            Signature[8];
@@ -77,7 +81,7 @@ namespace Agni
         }Agni_MainHeader;
 
         // Instruction stream header...
-        typedef struct _Agni_InstructionStreamHeader
+        typedef struct ATTRIBUTE_PACKED
         {
             // Number of instructions...
             uint32          unSize;
@@ -85,7 +89,7 @@ namespace Agni
         }Agni_InstructionStreamHeader;
 
         // String stream header...
-        typedef struct _Agni_StringStreamHeader
+        typedef struct ATTRIBUTE_PACKED
         {
             // Number of strings in stream...
             uint32  unSize;
@@ -93,7 +97,7 @@ namespace Agni
         }Agni_StringStreamHeader;
 
         // Function table header...
-        typedef struct _Agni_FunctionTableHeader
+        typedef struct ATTRIBUTE_PACKED
         {
             // Number of functions in table...
             uint32 unSize;
@@ -101,7 +105,7 @@ namespace Agni
         }Agni_FunctionTableHeader;
 
         // Function structure...
-        typedef struct _Agni_Function
+        typedef struct ATTRIBUTE_PACKED
         {
             // Entry point...
             uint32          unEntryPoint;
@@ -121,7 +125,7 @@ namespace Agni
         }Agni_Function;
 
         // Host function table header...
-        typedef struct _Agni_HostFunctionTableHeader
+        typedef struct ATTRIBUTE_PACKED
         {
             // Number of host functions in table...
             uint32 unSize;
@@ -129,7 +133,7 @@ namespace Agni
         }Agni_HostFunctionTableHeader;
 
         // Host function...
-        typedef struct _Agni_HostFunction
+        typedef struct ATTRIBUTE_PACKED
         {
             // Function names...
             char    szName[256];
@@ -234,4 +238,6 @@ namespace Agni
 
         // Cyclic redundancy check checksum key... (Ethernet, PKZip, etc)
         uint32 const unCheckSumKey = 0x04c11db7;}
+
+#endif
 

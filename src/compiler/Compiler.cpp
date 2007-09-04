@@ -6,6 +6,7 @@
 
 // Includes...
 #include "Compiler.h"
+#include <getopt.h>
 
 // Using the Agni namespace...
 using namespace Agni;
@@ -21,10 +22,10 @@ Compiler::Compiler(Parameters &_UserParameters)
 bool Compiler::Compile()
 {
     // Variables...
-    list<string>    SourceCodeLinkedList;
-    vector<string>  SourceCode;
-    unsigned int    unIndex                 = 0;
-    string          sRootPath;
+    std::list<std::string>      SourceCodeLinkedList;
+    std::vector<std::string>    SourceCode;
+    unsigned int                unIndex                 = 0;
+    std::string                 sRootPath;
 
     // Try to compile...
     try
@@ -32,30 +33,33 @@ bool Compiler::Compile()
         // Verify parameters...
 
             // No input file specified...
-            if(Parameters.sInputFile.empty())
-                throw Parameters.sCompilerName + ": no input file";
+            if(UserParameters.GetInputFile().empty())
+                throw UserParameters.GetProcessName() + ": no input file";
 
             // No output file specified...
-            if(Parameters.sOutputFile.empty())
-                throw Parameters.sCompilerName + ": no output file specified";
+            if(UserParameters.GetOutputFile().empty())
+                throw UserParameters.GetProcessName() + 
+                      ": no output file specified";
 
             // Input and output files are the same...
-            if(strcasecmp(Parameters.sInputFile.c_str(), 
-                          Parameters.sOutputFile.c_str()) == 0)
-                throw Parameters.sCompilerName + ": input and output are the "
-                                                 "same location";
+            if(strcasecmp(UserParameters.GetInputFile().c_str(), 
+                          UserParameters.GetOutputFile().c_str()) == 0)
+                throw UserParameters.GetProcessName() + 
+                    ": input and output are the same location";
 
         // Create root directory file name...
         
             // UNIX style paths...
-            if(string::npos != (unIndex = Parameters.sInputFile.rfind('/', 
-                                            Parameters.sInputFile.length() - 1)))
-                sRootPath.assign(Parameters.sInputFile, 0, unIndex + 1);
+            if(std::string::npos != 
+               (unIndex = UserParameters.GetInputFile().
+                    rfind('/', UserParameters.GetInputFile().length() - 1)))
+                sRootPath.assign(UserParameters.GetInputFile(), 0, unIndex + 1);
                 
             // Win32 style paths...
-            else if(string::npos != (unIndex = Parameters.sInputFile.rfind('\\', 
-                                            Parameters.sInputFile.length() - 1)))
-                sRootPath.assign(Parameters.sInputFile, 0, unIndex + 1);
+            else if(std::string::npos != 
+                    (unIndex = UserParameters.GetInputFile().
+                        rfind('\\', UserParameters.GetInputFile().length() - 1)))
+                sRootPath.assign(UserParameters.GetInputFile(), 0, unIndex + 1);
                 
             // No path...
             else
@@ -67,20 +71,21 @@ bool Compiler::Compile()
             Verbose("loading source code...");
 
             // Create loader to retrieve structured source code...
-            CLoader Loader(Parameters.sInputFile);
+            CLoader Loader(UserParameters.GetInputFile());
             
             // Load the source code and save it in a linked list...
             SourceCodeLinkedList = Loader.Load();
 
         // If requested, display token stream to stdout...
-        if(Parameters.ShouldDumpTokenStream())
+        if(UserParameters.ShouldDumpTokenStream())
         {
             // Variables...
             uint32          unLastCheckedLine   = 0;
 
             // Temporarily convert linked list to vector for lexer...
-            vector<string> TempSourceCodeVector(SourceCodeLinkedList.begin(),
-                                                SourceCodeLinkedList.end());
+            std::vector<std::string> 
+                TempSourceCodeVector(SourceCodeLinkedList.begin(),
+                                     SourceCodeLinkedList.end());
             
             // Initialize temp lexer...
             CLexer TempLexer(TempSourceCodeVector);
@@ -92,9 +97,10 @@ bool Compiler::Compile()
                 if(TempLexer.GetCurrentHumanLineIndex() != unLastCheckedLine)
                 {
                     // Display the line, token, and its associated lexeme...
-                    cout << endl << TempLexer.GetCurrentHumanLineIndex() << ": " 
-                         << TempLexer.GetCurrentTokenAsString()
-                         << " (\"" << TempLexer.GetCurrentLexeme() << "\") ";
+                    std::cout << std::endl 
+                        << TempLexer.GetCurrentHumanLineIndex() << ": " 
+                        << TempLexer.GetCurrentTokenAsString() << " (\"" 
+                        << TempLexer.GetCurrentLexeme() << "\") ";
     
                     // Remember the last checked line...
                     unLastCheckedLine = TempLexer.GetCurrentHumanLineIndex();
@@ -104,13 +110,13 @@ bool Compiler::Compile()
                 else
                 {
                     // Display the token, along with its associated lexeme...
-                    cout << TempLexer.GetCurrentTokenAsString() 
+                    std::cout << TempLexer.GetCurrentTokenAsString() 
                          << " (\"" << TempLexer.GetCurrentLexeme() << "\") ";
                 }
             }
             
             // Done, add a new line...
-            cout << endl << endl;
+            std::cout << std::endl << std::endl;
         }
 
         // Now pre-process it and turn it into a vector...
@@ -125,14 +131,14 @@ bool Compiler::Compile()
             SourceCode = PreProcessor.Process();
 
             // We were instructed to stop after preprocessing...
-            if(Parameters.bPreProcessOnly)
+            if(UserParameters.ShouldPreProcessOnly())
             {
                 // Be verbose...
                 Verbose("pre-processing complete, dumping, then halting...");
 
                 // Print each line... (humans count lines starting from one)
                 for(unIndex = 0; unIndex < SourceCode.size(); unIndex++)
-                    cout << unIndex + 1 << ":\t" << SourceCode.at(unIndex);
+                    std::cout << unIndex + 1 << ":\t" << SourceCode.at(unIndex);
 
                 // Done...
                 return true;
@@ -150,10 +156,11 @@ bool Compiler::Compile()
     }
 
         // Compilation failed for some reason...
-        catch(const string sReason)
+        catch(std::string const sReason)
         {
             // Output error message...
-            cout << Parameters.sCompilerName << ": " << sReason << endl;
+            std::cout << UserParameters.GetProcessName() << ": " << sReason 
+                      << std::endl;
 
             // Abort...
             return false;
@@ -164,18 +171,19 @@ bool Compiler::Compile()
 }
 
 // Be verbose, if appropriate...
-void Compiler::Verbose(const string sMessage) const
+void Compiler::Verbose(std::string const sMessage) const
 {
     // Verbose mode not enabled, ignore...
-    if(!Parameters.bVerbose)
+    if(!UserParameters.ShouldBeVerbose())
         return;
 
     // Output is standard output device, ingore...
-    if(Parameters.sOutputFile == "stdout")
+    if(UserParameters.GetOutputFile() == "stdout")
         return;
 
     // Output...
-    cout << Parameters.sCompilerName << ": " << sMessage << endl;
+    std::cout << UserParameters.GetProcessName() << ": " << sMessage 
+              << std::endl;
 }
 
 // Deconstructor...
@@ -228,8 +236,9 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
                                             char * const ppszArguments[])
 {
     // Variables...
-    char    cOption                 = 0;
-    int     nOption                 = 0;
+    char    cOption = 0;
+    int     nOption = 0;
+    int     nTemp   = 0;
 
     // Extract compiler executable name...
     sProcessName = ppszArguments[0];
@@ -385,8 +394,8 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
             default:
 
                 // Unknown switch, alert...
-                cout << sProcessName << ": \"" << optopt 
-                     << "\" unrecognized option" << endl;
+                std::cout << sProcessName << ": \"" << optopt 
+                     << "\" unrecognized option" << std::endl;
 
                 // Recommend no more parsing...
                 return false;
@@ -400,8 +409,8 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
         while(optind < nArguments)
         {
             // Display...
-            cout << sProcessName << ": option \"" 
-                 << ppszArguments[optind++] << "\" unknown" << endl;
+            std::cout << sProcessName << ": option \"" 
+                 << ppszArguments[optind++] << "\" unknown" << std::endl;
         }
         
         // No more parsing should be done...
@@ -416,7 +425,8 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
 void Compiler::Parameters::PrintHelp() const
 {
     // Display help...
-    cout << "Usage: ac [option(s)] [input-file] [output-file]\n"
+    std::cout << 
+            "Usage: ac [option(s)] [input-file] [output-file]\n"
             "Purpose: Compile Agni script, assemble into Agni executable...\n\n"
             " Options:\n"
             "  -c --compile=<infile>        Input file\n"

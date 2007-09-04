@@ -27,22 +27,23 @@
         #else
         bool const bLittleEndian    = false;
         #endif
-
-        // Define cross-platform structure packing attribute...
-
-            // Using a real compiler...
-            #if defined(__GNUC__)
-                #define ATTRIBUTE_PACKED __attribute__ ((__packed__))
-
-            // Using Visual C++...
-            #elif defined(_MSC_VER)
-                #define ATTRIBUTE_PACKED #pragma pack(1)
-
-            // Unknown compiler...
-            #else
-                #error I don't know how to set the structure packing attributes for your compiler...
-            #endif
     }
+
+    // Define cross-platform structure packing attribute...
+
+        // Using a real compiler...
+        #if defined(__GNUC__)
+            #define ATTRIBUTE_PACKED __attribute__ ((__packed__))
+
+        // Using Visual C++...
+        #elif defined(_MSC_VER)
+            #define ATTRIBUTE_PACKED #pragma pack(1)
+
+        // Unknown compiler...
+        #else
+            #error I don't know how to set the structure packing attributes for your compiler...
+        #endif
+
 
     // 32-bit little-endian x86 machine running some flavour of Linux...
     #if (defined(__i686__) || defined(__i586__) || defined(__i486__) || \

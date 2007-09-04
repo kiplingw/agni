@@ -33,7 +33,7 @@ env.Program('aa', ['src/assembler/Main.cpp',
 
 # Build compiler...
 env.Program('ac', ['src/compiler/Main.cpp',
-                   'src/compiler/CAgniCompiler.cpp',
+                   'src/compiler/Compiler.cpp',
                    'src/compiler/CLexer.cpp',
                    'src/compiler/CLoader.cpp',
                    'src/compiler/CParser.cpp',
