@@ -454,6 +454,7 @@ namespace Agni
                 void ParseCodeBlock() throw(std::string const);
                 void ParseContinue() throw(std::string const);
                 void ParseExpression() throw(std::string const);
+                void ParseFactor() throw(std::string const);
                 void ParseFor() throw(std::string const);
                 void ParseFunction() throw(std::string const);
                 void ParseFunctionCall() throw(std::string const);
@@ -462,6 +463,7 @@ namespace Agni
                 void ParseReturn() throw(std::string const);
                 void ParseSubExpression() throw(std::string const);
                 void ParseStatement() throw(std::string const);
+                void ParseTerm() throw(std::string const);
                 void ParseVariable() throw(std::string const);
                 void ParseWhile() throw(std::string const);
 

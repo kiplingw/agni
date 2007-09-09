@@ -82,12 +82,13 @@ bool Compiler::Compile()
             // Variables...
             uint32          unLastCheckedLine   = 0;
 
-            // Temporarily convert linked list to vector for lexer...
+            // Temporarily convert linked list to vector since this is what
+            //  the lexer expects...
             std::vector<std::string> 
                 TempSourceCodeVector(SourceCodeLinkedList.begin(),
                                      SourceCodeLinkedList.end());
             
-            // Initialize temp lexer...
+            // Initialize temporary lexer...
             CLexer TempLexer(TempSourceCodeVector);
 
             // Dump token stream...
@@ -119,7 +120,7 @@ bool Compiler::Compile()
             std::cout << std::endl << std::endl;
         }
 
-        // Now pre-process it and turn it into a vector...
+        // Now pre-process it and turn it into a finalized vector...
 
             // Be verbose...
             Verbose("pre-processing...");
@@ -134,7 +135,8 @@ bool Compiler::Compile()
             if(UserParameters.ShouldPreProcessOnly())
             {
                 // Be verbose...
-                Verbose("pre-processing complete, dumping, then halting...");
+                Verbose("pre-processing complete, dumping, then halting as"
+                        " requested...");
 
                 // Print each line... (humans count lines starting from one)
                 for(unIndex = 0; unIndex < SourceCode.size(); unIndex++)

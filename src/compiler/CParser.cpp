@@ -476,13 +476,13 @@ void CParser::Parse() throw(std::string const)
 // Parse an assignment...
 void CParser::ParseAssignment() throw(std::string const)
 {
-
+    /* TODO: Finish this */
 }
 
 // Parse a break...
 void CParser::ParseBreak() throw(std::string const)
 {
-
+    /* TODO: Finish this */
 }
 
 // Parse a code block...
@@ -490,7 +490,7 @@ void CParser::ParseCodeBlock() throw(std::string const)
 {
     // Code blocks cannot exist in the global scope...
     if(CurrentScope == Global)
-        throw "global code locks illegal";
+        throw "global code blocks illegal";
 
     // Parse every statement within this block until we read its end...
     while(Lexer.GetLookAheadCharacter() != '}')
@@ -503,7 +503,7 @@ void CParser::ParseCodeBlock() throw(std::string const)
 // Parse continue...
 void CParser::ParseContinue() throw(std::string const)
 {
-
+    /* TODO: Finish this */
 }
 
 // Parse an expression...
@@ -545,7 +545,7 @@ void CParser::ParseExpression() throw(std::string const)
             AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
                                     REGISTER_ICODE_T1);
 
-        // The first operand goes into the T0 register...
+        // The second operand goes into the T0 register...
         
             // Add the POP instruction...
             InstructionIndex = AddICodeInstruction(CurrentScope, 
@@ -626,7 +626,7 @@ void CParser::ParseExpression() throw(std::string const)
                     // Done...
                     break;
 
-                // This should never happen...
+                // This should never happen, but also appeases the compiler...
                 default:
                     throw "internal fault, unknown relational operator";
             }
@@ -640,13 +640,13 @@ void CParser::ParseExpression() throw(std::string const)
                                       TrueJumpTargetIndex);
 
             // The outcome for false expressions is a zero on the stack...
-            InstructionIndex = AddICodeInstruction(CurrentScope, 
-                                                   INSTRUCTION_ICODE_PUSH);
+            InstructionIndex = 
+                AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_PUSH);
             AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
             
             // Generate a jump past the true condition...
-            InstructionIndex = AddICodeInstruction(CurrentScope, 
-                                                   INSTRUCTION_ICODE_JMP);
+            InstructionIndex = 
+                AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JMP);
             AddJumpTargetICodeOperand(CurrentScope, InstructionIndex, 
                                       ExitJumpTargetIndex);
             
@@ -654,8 +654,8 @@ void CParser::ParseExpression() throw(std::string const)
             AddICodeJumpTarget(CurrentScope, TrueJumpTargetIndex);
             
             // The outcome for true expressions is a one on the stack...
-            InstructionIndex = AddICodeInstruction(CurrentScope, 
-                                                   INSTRUCTION_ICODE_PUSH);
+            InstructionIndex = 
+                AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_PUSH);
             AddIntegerICodeOperand(CurrentScope, InstructionIndex, 1);
             
             // In order to seek past true code, we need the exit target...
@@ -665,17 +665,129 @@ void CParser::ParseExpression() throw(std::string const)
         // Evaluate logical operator...
         else
         {
-            /* 
-                todo: finish this method 
-            */
+            // Decide what kind of logical operator...
+            switch(CurrentOperator)
+            {
+                // Binary and...
+                case CLexer::OPERATOR_LOGICAL_AND:
+                {
+                    // Prepare new jump target indices...
+                    InstructionListIndex FalseJumpTargetIndex = GetNextJumpTargetIndex();
+                    InstructionListIndex ExitJumpTargetIndex = GetNextJumpTargetIndex();
+
+                    // Second operand was false, so jump to false target...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JE);
+                    AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                            REGISTER_ICODE_T0);
+                    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+                    AddJumpTargetICodeOperand(CurrentScope, InstructionIndex,
+                                              FalseJumpTargetIndex);
+                                              
+                    // First operand was false, so jump to false target...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JE);
+                    AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                            REGISTER_ICODE_T1);
+                    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+                    AddJumpTargetICodeOperand(CurrentScope, InstructionIndex,
+                                              FalseJumpTargetIndex);
+                                              
+                    // Both operands were true, so expression resolves to one...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_PUSH);
+                    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 1);
+                    
+                    // Jump to exit target...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JMP);
+                    AddJumpTargetICodeOperand(CurrentScope, InstructionIndex, 
+                                              ExitJumpTargetIndex);
+
+                    // Actual false jump target...
+                    AddICodeJumpTarget(CurrentScope, FalseJumpTargetIndex);
+                    
+                    // False expressions resolve to zero...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_PUSH);
+                    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+                    
+                    // Actual exit label...
+                    AddICodeJumpTarget(CurrentScope, ExitJumpTargetIndex);
+                    
+                    // Done...
+                    break;
+                }
+                
+                // Binary or...
+                case CLexer::OPERATOR_LOGICAL_OR:
+                {
+                    // Prepare new jump target indices...
+                    InstructionListIndex TrueJumpTargetIndex = GetNextJumpTargetIndex();
+                    InstructionListIndex ExitJumpTargetIndex = GetNextJumpTargetIndex();
+                    
+                    // Second operand was true, so whole expression is true...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JNE);
+                    AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                            REGISTER_ICODE_T0);
+                    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+                    AddJumpTargetICodeOperand(CurrentScope, InstructionIndex,
+                                              TrueJumpTargetIndex);
+                                              
+                    // First operand was true, so whole expression is true...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JNE);
+                    AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                            REGISTER_ICODE_T1);
+                    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+                    AddJumpTargetICodeOperand(CurrentScope, InstructionIndex,
+                                              TrueJumpTargetIndex);
+                    
+                    // False expressions resolve to zero...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_PUSH);
+                    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);                
+                    
+                    // Jump to exit target...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JMP);
+                    AddJumpTargetICodeOperand(CurrentScope, InstructionIndex, 
+                                              ExitJumpTargetIndex);
+
+                    // The actual true jump target...
+                    AddICodeJumpTarget(CurrentScope, TrueJumpTargetIndex);
+                    
+                    // True expressions resolve to one...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_PUSH);
+                    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 1);
+                    
+                    // The actual exit jump target...
+                    AddICodeJumpTarget(CurrentScope, ExitJumpTargetIndex);
+                    
+                    // Done...
+                    break;
+                }
+                
+                // This should never happen, but also appeases the compiler...
+                default:
+                    throw "internal fault, unknown logical operator";
+            }
         }
     }
+}
+
+// Parse factor...
+void CParser::ParseFactor() throw(std::string const)
+{
+    /* TODO: Finish this */
 }
 
 // Parse for loop...
 void CParser::ParseFor() throw(std::string const)
 {
-
+    /* TODO: Finish this */
 }
 
 // Parse a function definition...
@@ -746,7 +858,7 @@ void CParser::ParseFunction() throw(std::string const)
 // Parse a function invokation...
 void CParser::ParseFunctionCall() throw(std::string const)
 {
-
+    /* TODO: Finish this */
 }
 
 // Parse a host function import...
@@ -772,13 +884,13 @@ void CParser::ParseHost() throw(std::string const)
 // Parse an if block...
 void CParser::ParseIf() throw(std::string const)
 {
-
+    /* TODO: Finish this */
 }
 
 // Parse a function return...
 void CParser::ParseReturn() throw(std::string const)
 {
-
+    /* TODO: Finish this */
 }
 
 // Parse a statement...
@@ -914,7 +1026,122 @@ void CParser::ParseStatement() throw(std::string const)
 // Parse a sub expression...
 void CParser::ParseSubExpression() throw(std::string const)
 {
+    // Variables...
+    InstructionListIndex    InstructionIndex    = 0;
+    CLexer::Operator        CurrentOperator;
+    
+    // Parse the first term...
+    ParseTerm();
+    
+    // Terms are flanked by +, -, and $ operators, so process next terms...
+    for(;;)
+    {
+        // Get next token and ensure suitable for this kind of parsing...
+        if(Lexer.GetNextToken() != CLexer::TOKEN_OPERATOR ||
+           (Lexer.GetCurrentOperator() != CLexer::OPERATOR_ADD &&
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_SUBTRACT &&
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_CONCATENATE))
+        {
+            // Back up then for the next appropriate kind of parsing...        
+            Lexer.Rewind();
+            break;
+        }
 
+        // Remember the current operator...
+        CurrentOperator = Lexer.GetCurrentOperator();
+        
+        // Now parse the second term...
+        ParseTerm();
+        
+        // First operand popped off into register T1...
+        InstructionIndex = 
+            AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_POP);
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T1);
+
+        // Second operand popped off into register T0...
+        InstructionIndex = 
+            AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_POP);
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T0);
+        
+        // Write appropriate instruction out for binary operator...
+        switch(CurrentOperator)
+        {
+            // Binary addition...
+            case CLexer::OPERATOR_ADD:
+                
+                // Add instruction...
+                InstructionIndex = 
+                    AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_ADD);
+                break;
+            
+            // Binary subtraction...
+            case CLexer::OPERATOR_SUBTRACT:
+            
+                // Sub instruction...
+                InstructionIndex = 
+                    AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_SUB);
+                break;
+            
+            // Binary concatenation...
+            case CLexer::OPERATOR_CONCATENATE:
+            
+                // Concat instruction...
+                InstructionIndex = 
+                    AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_CONCAT);
+                break;
+
+            // This should never happen...
+            default:
+                throw "internal fault, unknown binary operator";
+        }
+
+        // Binary operator instruction also needs its two operands...
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T0);
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T1);
+
+        // Result in register T0 should be pushed onto the stack now...
+        InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                               INSTRUCTION_ICODE_PUSH);
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T0);
+    }
+}
+
+// Parse a term within an expression...
+void CParser::ParseTerm() throw(std::string const)
+{
+    // Variables...
+    InstructionListIndex    InstructionIndex    = 0;
+    CLexer::Operator        CurrentOperator;
+    
+    // Parse the first factor...
+    ParseFactor();
+    
+    // Keep parsing any more *, /, %, ^, &, |, #, <<, and >>, operators...
+    for(;;)
+    {
+        // Get the next token and make sure we can process it here...
+        if(Lexer.GetNextToken() != CLexer::TOKEN_OPERATOR ||
+           (Lexer.GetCurrentOperator() != CLexer::OPERATOR_MULTIPLY && 
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_DIVIDE && 
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_MODULUS && 
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_EXPONENT && 
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_BITWISE_AND && 
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_BITWISE_OR && 
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_BITWISE_XOR && 
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_BITWISE_SHIFT_LEFT && 
+            Lexer.GetCurrentOperator() != CLexer::OPERATOR_BITWISE_SHIFT_RIGHT))
+        {
+                    // Back up then for the next appropriate kind of parsing...        
+                Lexer.Rewind();
+                break;
+        }
+    }
+    stuff
 }
 
 // Parse a variable / array declaration...
@@ -956,9 +1183,10 @@ void CParser::ParseVariable() throw(std::string const)
     ReadToken(CLexer::TOKEN_DELIMITER_SEMICOLON);
 }
 
+// Parse a while loop...
 void CParser::ParseWhile() throw(std::string const)
 {
-
+    /* TODO: Finish this */
 }
 
 // Read a token and verify it is what was expected...

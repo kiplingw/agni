@@ -46,7 +46,7 @@ std::list<std::string> CLoader::Load() const
             // New line signals the end of current one...
             case '\n':
             
-                // Store new line character cince lexer needs it. Store line...
+                // Store new line character since lexer needs it. Store line...
                 sCurrentLine += '\n';
                 SourceCodeLinkedList.push_back(sCurrentLine);
                 
@@ -75,6 +75,5 @@ std::list<std::string> CLoader::Load() const
     
     // Return the linked list script...
     return SourceCodeLinkedList;
-    
 }
 
