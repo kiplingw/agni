@@ -781,7 +781,84 @@ void CParser::ParseExpression() throw(std::string const)
 // Parse factor...
 void CParser::ParseFactor() throw(std::string const)
 {
-    /* TODO: Finish this */
+    // Variables...
+    InstructionListIndex    InstructionIndex        = 0;
+    CLexer::Operator        CurrentOperator;
+    bool                    bUnaryOperatorPending   = false;
+    
+    // A unary operator was found...
+    if(Lexer.GetNextToken() == CLexer::TOKEN_OPERATOR &&
+       (Lexer.GetCurrentOperator() == CLexer::OPERATOR_ADD || 
+        Lexer.GetCurrentOperator() == CLexer::OPERATOR_SUBTRACT ||
+        Lexer.GetCurrentOperator() == CLexer::OPERATOR_BITWISE_NOT ||
+        Lexer.GetCurrentOperator() == CLexer::OPERATOR_LOGICAL_NOT))
+    {
+        // Set the unary operator pending flag...
+        bUnaryOperatorPending = true;
+        
+        // Store the current operator...
+        CurrentOperator = Lexer.GetCurrentOperator();
+    }
+    
+    // No unary operator was found...
+    else
+    {
+        // Rewind token stream for next kind of parsing...
+        Lexer.Rewind();
+    }
+    
+    // Determine the kind of factor and parse it...
+    switch(Lexer.GetNextToken())
+    {
+        // True / false constant should push 1 / 0 respectively onto stack...
+        case CLexer::TOKEN_RESERVED_TRUE:
+        case CLexer::TOKEN_RESERVED_FALSE:
+        {
+            // Push...
+            InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                   INSTRUCTION_ICODE_PUSH);
+
+            // Operand...
+            AddIntegerICodeOperand(CurrentScope, InstructionIndex, 
+                Lexer.GetCurrentToken() == CLexer::TOKEN_RESERVED_TRUE ? 1 : 0);
+                
+            // Done...
+            break;
+        }
+   
+        // Integer literals should be pushed onto stack...
+        case CLexer::TOKEN_INTEGER:
+        {        
+            // Push...
+            InstructionIndex = AddICodeInstruction(CurrentScope,
+                                                   INSTRUCTION_ICODE_PUSH);
+            
+            // Operand...
+            AddIntegerICodeOperand(CurrentScope, InstructionIndex, 
+                                   atoi(Lexer.GetCurrentLexeme()));
+            
+            // Done...
+            break;
+        }
+
+        // Float literals should be pushed onto stack...
+        case CLexer::TOKEN_FLOAT:
+        {
+            // Push...
+            InstructionIndex = AddICodeInstruction(CurrentScope,
+                                                   INSTRUCTION_ICODE_PUSH);
+            
+            // Operand...
+            AddFloatICodeOperand(CurrentScope, InstructionIndex, 
+                                 (float) atof(Lexer.GetCurrentLexeme()));
+
+            // Done...
+            break;
+        }
+        
+        // String literal should have its index added to table...
+    }
+
 }
 
 // Parse for loop...
@@ -1094,7 +1171,8 @@ void CParser::ParseSubExpression() throw(std::string const)
 
             // This should never happen...
             default:
-                throw "internal fault, unknown binary operator";
+                throw "internal fault, unknown binary operator in sub"
+                      " expression";
         }
 
         // Binary operator instruction also needs its two operands...
@@ -1136,12 +1214,121 @@ void CParser::ParseTerm() throw(std::string const)
             Lexer.GetCurrentOperator() != CLexer::OPERATOR_BITWISE_SHIFT_LEFT && 
             Lexer.GetCurrentOperator() != CLexer::OPERATOR_BITWISE_SHIFT_RIGHT))
         {
-                    // Back up then for the next appropriate kind of parsing...        
-                Lexer.Rewind();
-                break;
+            // Back up then for the next appropriate kind of parsing...        
+            Lexer.Rewind();
+            break;
         }
+
+        // Retrieve the current operator...
+        CurrentOperator = Lexer.GetCurrentOperator();
+        
+        // Parse adjacent factor...
+        ParseFactor();
+        
+        // First operand popped off into register T1...
+        InstructionIndex = 
+            AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_POP);
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T1);
+
+        // Second operand popped off into register T0...
+        InstructionIndex = 
+            AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_POP);
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T0);
+        
+        // Write appropriate instruction out for binary operator...
+        switch(CurrentOperator)
+        {
+            // Binary multiply...
+            case CLexer::OPERATOR_MULTIPLY:
+            
+                // Mul instruction...
+                InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                       INSTRUCTION_ICODE_MUL);
+                break;
+            
+            // Binary division...
+            case CLexer::OPERATOR_DIVIDE:
+            
+                // Div instruction...
+                InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                       INSTRUCTION_ICODE_DIV);
+                break;
+            
+            // Binary modulus...
+            case CLexer::OPERATOR_MODULUS:
+            
+                // Mod instruction...
+                InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                       INSTRUCTION_ICODE_MOD);
+                break;
+            
+            // Binary exponentiation...
+            case CLexer::OPERATOR_EXPONENT:
+            
+                // Exp instruction...
+                InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                       INSTRUCTION_ICODE_EXP);
+                break;
+
+            // Binary bitwise AND...
+            case CLexer::OPERATOR_BITWISE_AND:
+            
+                // And instruction...
+                InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                       INSTRUCTION_ICODE_AND);
+                break;
+
+            // Binary bitwise OR...
+            case CLexer::OPERATOR_BITWISE_OR:
+
+                // Or instruction...
+                InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                       INSTRUCTION_ICODE_OR);
+                break;
+
+            // Binary bitwise XOR...
+            case CLexer::OPERATOR_BITWISE_XOR:
+
+                // XOr instruction...
+                InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                       INSTRUCTION_ICODE_XOR);
+                break;
+
+            // Binary bitwise shift left...
+            case CLexer::OPERATOR_BITWISE_SHIFT_LEFT:
+
+                // Shl instruction...
+                InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                       INSTRUCTION_ICODE_SHL);
+                break;
+
+            // Binary bitwise shift right...
+            case CLexer::OPERATOR_BITWISE_SHIFT_RIGHT:
+
+                // Shr instruction...
+                InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                                       INSTRUCTION_ICODE_SHR);
+                break;
+
+            // This should never happen...
+            default:
+                throw "internal fault, unknown binary operator in term";
+        }
+
+        // Binary operator instruction also needs its two operands...
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T0);
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T1);
+
+        // Result in register T0 should be pushed onto the stack now...
+        InstructionIndex = AddICodeInstruction(CurrentScope, 
+                                               INSTRUCTION_ICODE_PUSH);
+        AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                REGISTER_ICODE_T0);      
     }
-    stuff
 }
 
 // Parse a variable / array declaration...

@@ -28,23 +28,24 @@ else:
     env.Append(CPPFLAGS = '-O3')
 
 # Build assembler...
-env.Program('aa', ['src/assembler/Main.cpp', 
-                   'src/assembler/Assembler.cpp'])
+env.Program('assembler', ['src/assembler/Main.cpp', 
+                          'src/assembler/Assembler.cpp'])
 
 # Build compiler...
-env.Program('ac', ['src/compiler/Main.cpp',
-                   'src/compiler/Compiler.cpp',
-                   'src/compiler/CLexer.cpp',
-                   'src/compiler/CLoader.cpp',
-                   'src/compiler/CParser.cpp',
-                   'src/compiler/CPreProcessor.cpp'])
+env.Program('compiler', ['src/compiler/Main.cpp',
+                         'src/compiler/Compiler.cpp',
+                         'src/compiler/CLexer.cpp',
+                         'src/compiler/CLoader.cpp',
+                         'src/compiler/CParser.cpp',
+                         'src/compiler/CPreProcessor.cpp'])
 
 # Build virtual machine...
-env.SharedLibrary('agni', 'src/virtualmachine/VirtualMachine.cpp')
+avm = env.SharedLibrary('agni', ['src/virtualmachine/VirtualMachine.cpp'])
 
 # Build virtual machine test...
-env.Program('avmtest', 
-            'src/testing/VirtualMachineTest.cpp', 
-            LIBS = 'agni', 
+avmtest = env.Program('avmtest', 
+            ['src/testing/VirtualMachineTest.cpp'], 
+            LIBS = ['agni'],
             LIBPATH = '.')
+env.Depends(avmtest, avm)
 

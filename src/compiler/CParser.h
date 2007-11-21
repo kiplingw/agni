@@ -387,6 +387,8 @@ namespace Agni
                                              ICodeRegister Register) 
                     throw(std::string const);
 
+addstring
+
                 // Add string operand to i-code instruction...
                 void AddStringICodeOperand(IdentifierScope FunctionIndex, 
                                            InstructionListIndex InstructionIndex,
