@@ -24,7 +24,6 @@
         #include <vector>
         #include <string>
         #include <map>
-        #include <set>
         #include <list>
         #include <utility>
         #include <stack>
@@ -303,8 +302,8 @@ namespace Agni
                             // Variable type...
                             typedef enum IdentifierType
                             {
-                                PARAMETER  = 0,
-                                VARIABLE
+                                Parameter  = 0,
+                                Variable
                             };
 
                         // Constructor...
@@ -387,7 +386,8 @@ namespace Agni
                                              ICodeRegister Register) 
                     throw(std::string const);
 
-addstring
+                // Add a string, ignoring duplicates, and return index...
+                StringTableIndex const AddString(std::string const sString);
 
                 // Add string operand to i-code instruction...
                 void AddStringICodeOperand(IdentifierScope FunctionIndex, 
@@ -423,6 +423,10 @@ addstring
 
                 // Get the next jump target index...
                 InstructionListIndex GetNextJumpTargetIndex();
+
+                // Get a string by index...
+                std::string const GetStringByIndex(StringTableIndex const Index) 
+                    const;
 
                 // Get variable by name, or throw an error...
                 CVariable &GetVariableByName(VariableName Name) 
@@ -501,7 +505,8 @@ addstring
                     VariableTable_KeyByIndex;
                 
                 // String table...
-                std::set<std::string>                   StringTable;
+                std::vector<std::string>                StringTableVector;
+                std::map<std::string, StringTableIndex> StringTableMap;
 
                 // Script's main header...
                 Agni_MainHeader                         MainHeader;

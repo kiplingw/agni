@@ -7,7 +7,7 @@
 */
 
 // Includes...
-#include "../include/Agni.h"
+#include <Agni.h>
 #include <iostream>
 #include <string>
 

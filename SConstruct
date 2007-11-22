@@ -3,22 +3,28 @@
 # Imports...
 import os
 
-# Create environment...
-env = Environment()
+# Grab environment object and prepare prettier build messages......
+env = Environment(CXXCOMSTR     = "Compiling $SOURCE ...",
+                  SHCXXCOMSTR   = "Comiling shared object $TARGET ...",
+                  LINKCOMSTR    = "Linking $TARGET ...",
+                  ARCOMSTR      = "Archiving $TARGET ...",
+                  RANLIBCOMSTR  = "Indexing $TARGET ...",
+                  LDMODULECOMSTR = "soiling $TARGET ...")
 
 # SCons internal settings...
 env.SourceSignatures('MD5')
 
 # Versioning...
-VERSION_MAJOR   = 0
-VERSION_MINOR   = 94
-VERSION_SVN     = os.popen('echo -n `LANG=C svn info | grep ^Revision | cut -d\  -f2`').read()
+env.VERSION_MAJOR   = 0
+env.VERSION_MINOR   = 94
+env.VERSION_SVN     = os.popen('svnversion .').read()[:-1]
+env.VERSION_SVN     = env.VERSION_SVN.split(':')[-1]
 
 # Common flags...
-env.Append(CPPFLAGS = '-DAGNI_VERSION_MAJOR=' + str(VERSION_MAJOR) + " " \
-                      '-DAGNI_VERSION_MINOR=' + str(VERSION_MINOR) + " " \
-                      '-DAGNI_VERSION_SVN=' + str(VERSION_SVN) + 
-                      " -Wall -Werror ")
+env.Append(CPPFLAGS = " -Wall -Werror ")
+env.Append(CPPDEFINES=[('AGNI_VERSION_MAJOR', env.VERSION_MAJOR),
+                       ('AGNI_VERSION_MINOR', env.VERSION_MINOR),
+                       ('AGNI_VERSION_SVN', "'\"" + env.VERSION_SVN + "\"'")])
 
 # Debugging enabled?
 debug = ARGUMENTS.get('debug', 1)
@@ -28,24 +34,28 @@ else:
     env.Append(CPPFLAGS = '-O3')
 
 # Build assembler...
-env.Program('assembler', ['src/assembler/Main.cpp', 
-                          'src/assembler/Assembler.cpp'])
+assembler = env.Program('aga', ['src/assembler/Main.cpp', 
+                        'src/assembler/Assembler.cpp'])
+env.Alias('assembler', assembler)
 
 # Build compiler...
-env.Program('compiler', ['src/compiler/Main.cpp',
-                         'src/compiler/Compiler.cpp',
-                         'src/compiler/CLexer.cpp',
-                         'src/compiler/CLoader.cpp',
-                         'src/compiler/CParser.cpp',
-                         'src/compiler/CPreProcessor.cpp'])
+compiler = env.Program('agc', ['src/compiler/Main.cpp',
+                       'src/compiler/Compiler.cpp',
+                       'src/compiler/CLexer.cpp',
+                       'src/compiler/CLoader.cpp',
+                       'src/compiler/CParser.cpp',
+                       'src/compiler/CPreProcessor.cpp'])
+env.Alias('compiler', compiler)
 
 # Build virtual machine...
 avm = env.SharedLibrary('agni', ['src/virtualmachine/VirtualMachine.cpp'])
+env.Alias('vm', avm)
 
 # Build virtual machine test...
 avmtest = env.Program('avmtest', 
-            ['src/testing/VirtualMachineTest.cpp'], 
+            ['src/virtualmachine/testing/VirtualMachineTest.cpp'], 
             LIBS = ['agni'],
-            LIBPATH = '.')
+            LIBPATH = '.',
+            CPPPATH = "src/include")
 env.Depends(avmtest, avm)
 

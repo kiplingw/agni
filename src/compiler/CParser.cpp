@@ -7,6 +7,7 @@
 
 // Includes...
 #include "CParser.h"
+#include <cassert>
 
 // Using the Agni namepace...
 using namespace Agni;
@@ -204,6 +205,32 @@ void CParser::AddRegisterICodeOperand(IdentifierScope FunctionIndex,
     AddICodeOperand(FunctionIndex, InstructionIndex, Operand);
 }
 
+// Add a string, ignoring duplicates, and return index...
+CParser::StringTableIndex const CParser::AddString(std::string const sString)
+{
+    // Look for the string...
+    std::map<std::string, StringTableIndex>::const_iterator MapIterator
+        = StringTableMap.find(sString);
+
+    // The string is not already added...
+    if(MapIterator == StringTableMap.end())
+    {
+        // Add to the string table vector...
+        StringTableVector.push_back(sString);
+        
+        // Now make a note of the string's index in the vector...
+        StringTableMap[sString] = StringTableVector.size() - 1;
+        
+        // Return the index...
+        return StringTableMap[sString];
+    }
+
+    // The string has already been added, return the index...
+    else
+        return (*MapIterator).second;
+    
+}
+
 // Add string operand to i-code instruction...
 void CParser::AddStringICodeOperand(IdentifierScope FunctionIndex,
                                     InstructionListIndex InstructionIndex,
@@ -333,6 +360,17 @@ CParser::InstructionListIndex CParser::GetNextJumpTargetIndex()
 {
     // Return the next available jump target...
     return CurrentJumpTargetIndex++;
+}
+
+// Get a string by index...
+std::string const CParser::GetStringByIndex(
+    CParser::StringTableIndex const Index) const
+{
+    // The index can't ever be out of bounds...
+    assert(Index <= StringTableVector.size() - 1);
+    
+    // Return it...
+    return StringTableVector.at(Index);
 }
 
 // Get variable via name, or throw an error...
@@ -835,8 +873,8 @@ void CParser::ParseFactor() throw(std::string const)
             
             // Operand...
             AddIntegerICodeOperand(CurrentScope, InstructionIndex, 
-                                   atoi(Lexer.GetCurrentLexeme()));
-            
+                                   atoi(Lexer.GetCurrentLexeme().c_str()));
+
             // Done...
             break;
         }
@@ -847,16 +885,83 @@ void CParser::ParseFactor() throw(std::string const)
             // Push...
             InstructionIndex = AddICodeInstruction(CurrentScope,
                                                    INSTRUCTION_ICODE_PUSH);
-            
+
             // Operand...
             AddFloatICodeOperand(CurrentScope, InstructionIndex, 
-                                 (float) atof(Lexer.GetCurrentLexeme()));
+                (float) atof(Lexer.GetCurrentLexeme().c_str()));
 
             // Done...
             break;
         }
-        
+
         // String literal should have its index added to table...
+        case CLexer::TOKEN_STRING:
+        {
+            // Add to string table and get index...
+            StringTableIndex const StringIndex = 
+                AddString(Lexer.GetCurrentLexeme());
+
+            // Add the string index into the i-code stream...
+            InstructionIndex = 
+                AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_PUSH);
+
+            // Add the push instruction's operand, the string table index...
+            AddStringICodeOperand(CurrentScope, InstructionIndex, StringIndex);
+            
+            // Done...
+            break;
+        }
+        
+        // Identifier found...
+        case CLexer::TOKEN_IDENTIFIER:
+        {
+            // This is a variable / array...
+            if(IsVariableInTable(Lexer.GetCurrentLexeme(), CurrentScope))
+            {
+                // Get the variable / array object...
+                CVariable const &Variable = 
+                GetVariableByIdentifier(Lexer.GetCurrentLexeme(), CurrentScope);
+            
+                // This is an array...
+                if(Lexer.GetLookAheadCharacter() == '[')
+                {
+                    // Make sure this is an array, since arrays must be > 1 size...
+                    if(Variable.unSize <= 1)
+                        throw "invalid array";
+
+                    // Chomp the opening brace...
+                    ReadToken(CLexer::TOKEN_DELIMITER_OPEN_BRACE);
+                    
+                    // An expression of some kind must follow before parsing...
+                    if(Lexer.GetLookAheadCharacter() == ']')
+                        throw "index required for array";
+
+                    // Parse expression...
+                    ParseExpression();
+                    
+                    // Chomp the closing brace...
+                    ReadToken(CLexer::TOKEN_DELIMITER_CLOSE_BRACE);
+                    
+                    // Parsing expression will leave value in register T0, so we
+                    //  want to PUSH it onto the stack...
+                    InstructionIndex = 
+                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_POP);
+                    
+                    // PUSH, of course, also needs its operand, the index...
+                    AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
+                                            REGISTER_ICODE_T0);
+                }
+                
+                // This is a variable...
+                else
+                {
+                    finish this
+                }
+            }
+
+            // Done...
+            break;        
+        }
     }
 
 }
