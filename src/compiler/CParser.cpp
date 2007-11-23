@@ -944,26 +944,86 @@ void CParser::ParseFactor() throw(std::string const)
                     
                     // Parsing expression will leave value in register T0, so we
                     //  want to PUSH it onto the stack...
-                    InstructionIndex = 
-                        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_POP);
-                    
-                    // PUSH, of course, also needs its operand, the index...
-                    AddRegisterICodeOperand(CurrentScope, InstructionIndex, 
-                                            REGISTER_ICODE_T0);
+                    InstructionIndex = AddICodeInstruction(
+                        CurrentScope, INSTRUCTION_ICODE_POP);
+                    AddRegisterICodeOperand(
+                        CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+
+                    // The original identifier should be PUSHed onto stack as
+                    //  an array with its index in first machine register...
+                    InstructionIndex = AddICodeInstruction(
+                        CurrentScope, INSTRUCTION_ICODE_PUSH);
+                    AddArrayIndexRegisterICodeOperand(
+                        CurrentScope, InstructionIndex, Variable.Index,
+                        REGISTER_ICODE_TO);
                 }
                 
                 // This is a variable...
                 else
                 {
-                    finish this
+                    // Verify this is a variable...
+                    if(Variable.unSize != 1)
+                        throw "expected an array index";
+                    
+                    // PUSH the variable onto the stack...
+                    InstructionIndex = AddICodeInstruction(
+                        CurrentScope, INSTRUCTION_ICODE_PUSH);
+                    AddVariableICodeOperand(
+                        CurrentScope, InstructionIndex, Variable.Index);
+                }
+            }
+            
+            // Identifier is not an array or variable so could be function...
+            else
+            {
+                // Identified as a function...
+                if(IsFunctionInTable(GetCurrentLexeme()))
+                {
+                    // Parse the function call...
+                    ParseFunctionCall();
+                    
+                    // The return value should be PUSHed onto the stack...
+                    InstructionIndex = AddICodeInstruction(
+                        CurrentScope, INSTRUCTION_ICODE_PUSH);
+                    AddRegisterICodeOperand(
+                        CurrentScope, InstructionIndex, REGISTER_ICODE_RETURN);
                 }
             }
 
             // Done...
             break;        
         }
+        
+        // Nested expression...
+        case CLexer::TOKEN_DELIMITER_OPEN_PARENTHESIS:
+        {
+            // The expression should be parsed...
+            ParseExpression();
+            
+            // The expression should be terminated by a closing parenthesis...
+            ReadToken(TOKEN_DELIMITER_CLOSE_PARENTHESIS);
+            
+            // Done...
+            break;
+        }
+        
+        // Any other token is considered invalid within a factor...
+        default:
+            throw "junk input";
     }
 
+    // A unary operator is pending...
+    if(bUnaryOperatorPending)
+    {
+        // The result should be popped off stack into first machine register...
+        InstructionIndex = AddICodeInstruction(
+            CurrentScope, INSTRUCTION_ICODE_POP);
+        AddRegisterICodeOperand(
+            CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+            
+        // 
+        finish this
+    }
 }
 
 // Parse for loop...
