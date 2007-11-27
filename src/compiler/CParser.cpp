@@ -538,7 +538,25 @@ void CParser::ParseAssignment() throw(std::string const)
 // Parse a break...
 void CParser::ParseBreak() throw(std::string const)
 {
-    /* TODO: Finish this */
+    // You can only break when within a loop or switch...
+    if(LoopStack.empty())
+        throw "break keyword can only be used within a loop or switch";
+
+    // Annotate the assembly listing with the original line...
+    AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
+    
+    // There must be a semicolon next...
+    ReadToken(CLexer::TOKEN_DELIMITER_SEMICOLON);
+    
+    // Prepare the jump target to the end of this loop...
+    InstructionListIndex const LoopEndJumpTargetIndex = 
+        LoopStack.top().EndTargetIndex;
+
+    // JMP unconditionally to the recovered jump target...
+    InstructionListIndex const InstructionIndex =
+        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JMP);
+    AddJumpTargetICodeOperand(
+        CurrentScope, InstructionIndex, LoopEndJumpTargetIndex);
 }
 
 // Parse a code block...
@@ -1126,7 +1144,17 @@ void CParser::ParseFactor() throw(std::string const)
 // Parse for loop...
 void CParser::ParseFor() throw(std::string const)
 {
-    /* TODO: Finish this */
+    // We cannot have a for loop in the global scope...
+    if(CurrentScope == Global)
+        throw "for loops are forbidden from the global scope";
+
+    // Annotate the listing with the original line of code...
+    AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
+    
+    /*
+        TODO: Implement for loop parser...
+    */
+        throw "for loop is not implemented";
 }
 
 // Parse a function definition...
