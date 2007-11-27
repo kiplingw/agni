@@ -431,7 +431,7 @@ CParser::CVariable &CParser::GetVariableByIndex(VariableTableIndex Index)
 uint32 CParser::GetVariableSize(VariableName Name) throw(std::string const)
 {
     // Find the variable...
-    CVariable &Variable = GetVariableByName(Name);
+    CVariable const &Variable = GetVariableByName(Name);
     
     // Return the size to caller...
     return Variable.unSize;
@@ -532,7 +532,25 @@ void CParser::Parse() throw(std::string const)
 // Parse an assignment...
 void CParser::ParseAssignment() throw(std::string const)
 {
-    /* TODO: Finish this */
+    // Variables...
+    InstructionListIndex    InstructionIndex    = 0;
+    CLexer::Operator        AssignmentOperator  = CLexer::___OPERATOR_INVALID___;
+    bool                    bIsArray            = false;
+
+    // Assignments only make sense within a function...
+    if(CurrentScope == Global)
+        throw "assignments can only occur within a function";
+
+    // Annotate the assembly listing with the original source line...
+    AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
+    
+    // Retrieve the variable / array...
+    CVariable const &Variable = GetVariableByName(
+        VariableName(Lexer.GetCurrentLexeme(), CurrentScope));
+
+    /*
+        TODO: Finish this...
+    */
 }
 
 // Parse a break...
@@ -577,7 +595,25 @@ void CParser::ParseCodeBlock() throw(std::string const)
 // Parse continue...
 void CParser::ParseContinue() throw(std::string const)
 {
-    /* TODO: Finish this */
+    // You can only break when within a loop or switch...
+    if(LoopStack.empty())
+        throw "continue keyword can only be used within a loop";
+
+    // Annotate the assembly listing with the original line...
+    AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
+    
+    // There must be a semicolon next...
+    ReadToken(CLexer::TOKEN_DELIMITER_SEMICOLON);
+    
+    // Prepare the jump target to the start of this loop...
+    InstructionListIndex const LoopStartJumpTargetIndex = 
+        LoopStack.top().StartTargetIndex;
+
+    // JMP unconditionally back to the beginning of the loop...
+    InstructionListIndex const InstructionIndex =
+        AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JMP);
+    AddJumpTargetICodeOperand(
+        CurrentScope, InstructionIndex, LoopStartJumpTargetIndex);
 }
 
 // Parse an expression...
