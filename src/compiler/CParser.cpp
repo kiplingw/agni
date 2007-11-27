@@ -32,6 +32,24 @@ CParser::CParser(std::vector<std::string> &InputSourceCode)
     memset(&MainHeader, 0, sizeof(Agni_MainHeader));
 }
 
+// Add index into an array within a register as an operand...
+void CParser::AddArrayIndexRegisterICodeOperand(
+    IdentifierScope FunctionIndex,
+    InstructionListIndex InstructionIndex,
+    VariableTableIndex VariableIndex,
+    ICodeRegister Register) throw(std::string const)
+{
+    // Variables...
+    ICodeOperand    Operand;
+    
+    // Initialize operand to array index within register...
+    Operand.Type        = OT_ICODE_INDEX_ARRAY_REGISTER;
+    Operand.Register    = Register;
+
+    // Add the operand to the instruction...
+    AddICodeOperand(FunctionIndex, InstructionIndex, Operand);
+}
+
 // Add float operand to i-code instruction...
 void CParser::AddFloatICodeOperand(
     IdentifierScope FunctionIndex, 
@@ -143,8 +161,8 @@ void CParser::AddICodeOperand(IdentifierScope FunctionIndex,
                               ICodeOperand Operand) throw(std::string const)
 {
     // Find the node...
-    ICodeNode &Node = GetICodeNodeByImplicitIndex(FunctionIndex,
-                                                  InstructionIndex);
+    ICodeNode &Node = GetICodeNodeByImplicitIndex(
+        FunctionIndex, InstructionIndex);
 
     // Verify that this is an instruction...
     if(Node.Type != ICodeNode::INSTRUCTION)
@@ -868,12 +886,13 @@ void CParser::ParseFactor() throw(std::string const)
         case CLexer::TOKEN_INTEGER:
         {        
             // Push...
-            InstructionIndex = AddICodeInstruction(CurrentScope,
-                                                   INSTRUCTION_ICODE_PUSH);
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_PUSH);
             
             // Operand...
-            AddIntegerICodeOperand(CurrentScope, InstructionIndex, 
-                                   atoi(Lexer.GetCurrentLexeme().c_str()));
+            AddIntegerICodeOperand(
+                CurrentScope, InstructionIndex, 
+                atoi(Lexer.GetCurrentLexeme().c_str()));
 
             // Done...
             break;
@@ -883,8 +902,8 @@ void CParser::ParseFactor() throw(std::string const)
         case CLexer::TOKEN_FLOAT:
         {
             // Push...
-            InstructionIndex = AddICodeInstruction(CurrentScope,
-                                                   INSTRUCTION_ICODE_PUSH);
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_PUSH);
 
             // Operand...
             AddFloatICodeOperand(CurrentScope, InstructionIndex, 
@@ -916,11 +935,13 @@ void CParser::ParseFactor() throw(std::string const)
         case CLexer::TOKEN_IDENTIFIER:
         {
             // This is a variable / array...
-            if(IsVariableInTable(Lexer.GetCurrentLexeme(), CurrentScope))
+            if(IsVariableInTable(
+                VariableName(Lexer.GetCurrentLexeme(), CurrentScope)))
             {
                 // Get the variable / array object...
                 CVariable const &Variable = 
-                GetVariableByIdentifier(Lexer.GetCurrentLexeme(), CurrentScope);
+                GetVariableByName(
+                    VariableName(Lexer.GetCurrentLexeme(), CurrentScope));
             
                 // This is an array...
                 if(Lexer.GetLookAheadCharacter() == '[')
@@ -955,7 +976,7 @@ void CParser::ParseFactor() throw(std::string const)
                         CurrentScope, INSTRUCTION_ICODE_PUSH);
                     AddArrayIndexRegisterICodeOperand(
                         CurrentScope, InstructionIndex, Variable.Index,
-                        REGISTER_ICODE_TO);
+                        REGISTER_ICODE_T0);
                 }
                 
                 // This is a variable...
@@ -972,16 +993,16 @@ void CParser::ParseFactor() throw(std::string const)
                         CurrentScope, InstructionIndex, Variable.Index);
                 }
             }
-            
+
             // Identifier is not an array or variable so could be function...
             else
             {
                 // Identified as a function...
-                if(IsFunctionInTable(GetCurrentLexeme()))
+                if(IsFunctionInTable(Lexer.GetCurrentLexeme()))
                 {
                     // Parse the function call...
                     ParseFunctionCall();
-                    
+
                     // The return value should be PUSHed onto the stack...
                     InstructionIndex = AddICodeInstruction(
                         CurrentScope, INSTRUCTION_ICODE_PUSH);
@@ -993,20 +1014,20 @@ void CParser::ParseFactor() throw(std::string const)
             // Done...
             break;        
         }
-        
+
         // Nested expression...
         case CLexer::TOKEN_DELIMITER_OPEN_PARENTHESIS:
         {
             // The expression should be parsed...
             ParseExpression();
-            
+
             // The expression should be terminated by a closing parenthesis...
-            ReadToken(TOKEN_DELIMITER_CLOSE_PARENTHESIS);
-            
+            ReadToken(CLexer::TOKEN_DELIMITER_CLOSE_PARENTHESIS);
+
             // Done...
             break;
         }
-        
+
         // Any other token is considered invalid within a factor...
         default:
             throw "junk input";
@@ -1020,9 +1041,85 @@ void CParser::ParseFactor() throw(std::string const)
             CurrentScope, INSTRUCTION_ICODE_POP);
         AddRegisterICodeOperand(
             CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+
+        // Write out instructions for logical not application...
+        if(CurrentOperator == CLexer::OPERATOR_LOGICAL_NOT)
+        {
+            // Generate true and exit jump targets...
+            InstructionListIndex const TrueJumpTargetIndex = 
+                GetNextJumpTargetIndex();
+            InstructionListIndex const ExitJumpTargetIndex =
+                GetNextJumpTargetIndex();
+
+            // Generate JE _RegisterT0, 0, TrueJumpTargetIndex
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_JE);
+            AddRegisterICodeOperand(
+                CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+            AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+            AddJumpTargetICodeOperand(
+                CurrentScope, InstructionIndex, TrueJumpTargetIndex);
+
+            // Generate logic for false condition...
+
+                // Push false on stack... PUSH 0
+                InstructionIndex = AddICodeInstruction(
+                    CurrentScope, INSTRUCTION_ICODE_PUSH);
+                AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+
+                // Jump to exit...
+                InstructionIndex = AddICodeInstruction(
+                    CurrentScope, INSTRUCTION_ICODE_JMP);
+                AddJumpTargetICodeOperand(
+                    CurrentScope, InstructionIndex, ExitJumpTargetIndex);
+
+            // Generate logic for true condition...
+
+                // True jump target...
+                AddICodeJumpTarget(CurrentScope, TrueJumpTargetIndex);
+
+                // Expression resolved to true, so push it on to stack...
+                InstructionIndex = AddICodeInstruction(
+                    CurrentScope, INSTRUCTION_ICODE_PUSH);
+                AddIntegerICodeOperand(CurrentScope, InstructionIndex, 1);
+
+            // The exit jump target...
+            AddICodeJumpTarget(CurrentScope, ExitJumpTargetIndex);
+        }
+        
+        // Write out instructions for some other operator type...
+        else
+        {
+            // Detect current operator...
+            switch(CurrentOperator)
+            {
+                // Subtraction symbol becomes negation when applied unary...
+                case CLexer::OPERATOR_SUBTRACT:
+                    InstructionIndex = AddICodeInstruction(
+                        CurrentScope, INSTRUCTION_ICODE_NEG);
+                    break;
+                
+                // Bitwise not symbol becomes bitwise not instruction...
+                case CLexer::OPERATOR_BITWISE_NOT:
+                    InstructionIndex = AddICodeInstruction(
+                        CurrentScope, INSTRUCTION_ICODE_NOT);
+                    break;
+                
+                // Something is busted...
+                default:
+                    throw "internal fault while parsing factor";
+            }
             
-        // 
-        finish this
+            // The operand is the result in the first machine register...
+            AddRegisterICodeOperand(
+                CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+
+            // The result gets PUSHed onto the stack...
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_PUSH);
+            AddRegisterICodeOperand(
+                CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+        }
     }
 }
 
@@ -1086,7 +1183,7 @@ void CParser::ParseFunction() throw(std::string const)
                                          CurrentScope);
 
             // Add to variable table... (can't pass arrays yet)
-            AddVariable(NewParameter, 1, CVariable::PARAMETER);
+            AddVariable(NewParameter, 1, CVariable::Parameter);
             
             // Done with it...
             ParametersLeftToRight.pop();
@@ -1529,7 +1626,7 @@ void CParser::ParseVariable() throw(std::string const)
     VariableName Name(sIdentifier, CurrentScope);
     
     // Add it to the table...
-    AddVariable(Name, unSize, CVariable::VARIABLE);
+    AddVariable(Name, unSize, CVariable::Variable);
     
     // Eat the terminating semicolon...
     ReadToken(CLexer::TOKEN_DELIMITER_SEMICOLON);

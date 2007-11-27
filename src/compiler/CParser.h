@@ -113,6 +113,7 @@ namespace Agni
                     OT_ICODE_VARIABLE,
                     OT_ICODE_INDEX_ARRAY_ABSOLUTE,
                     OT_ICODE_INDEX_ARRAY_VARIABLE,
+                    OT_ICODE_INDEX_ARRAY_REGISTER,
                     OT_ICODE_INDEX_JUMP_TARGET,
                     OT_ICODE_INDEX_FUNCTION,
                     OT_ICODE_REGISTER
@@ -334,7 +335,15 @@ namespace Agni
                 };
 
             // Methods...
-            
+
+                // Add index into an array within a register as an operand...
+                void AddArrayIndexRegisterICodeOperand(
+                        IdentifierScope FunctionIndex,
+                        InstructionListIndex InstructionIndex,
+                        VariableTableIndex VariableIndex,
+                        ICodeRegister Register)
+                    throw(std::string const);
+
                 // Add float operand to i-code instruction...
                 void AddFloatICodeOperand(IdentifierScope FunctionIndex, 
                                           InstructionListIndex InstructionIndex,
