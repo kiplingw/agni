@@ -172,6 +172,24 @@ void CParser::AddICodeOperand(IdentifierScope FunctionIndex,
     Node.Instruction.OperandList.push_back(Operand);
 }
 
+// Add function index operand to i-code instruction...
+void CParser::AddFunctionICodeOperand(IdentifierScope const FunctionIndex, 
+    InstructionListIndex const InstructionIndex,
+    IdentifierScope const OperandFunctionIndex) 
+    throw(std::string const)
+{
+    // Variables...
+    ICodeOperand    Operand;
+    
+    // Initialize operand to integer...
+    Operand.Type            = OT_ICODE_INDEX_FUNCTION;
+    Operand.FunctionIndex   = OperandFunctionIndex;
+    
+    // Add the operand to the instruction...
+    AddICodeOperand(FunctionIndex, InstructionIndex, Operand);
+}
+
+
 // Add integer operand to i-code instruction...
 void CParser::AddIntegerICodeOperand(IdentifierScope FunctionIndex,
                                      InstructionListIndex InstructionIndex,
@@ -1451,7 +1469,48 @@ void CParser::ParseFunction() throw(std::string const)
 // Parse a function invokation...
 void CParser::ParseFunctionCall() throw(std::string const)
 {
-    /* TODO: Finish this */
+    // Variables...
+    unsigned int            unParametersFound   = 0;
+    InstructionListIndex    InstructionIndex    = 0;
+
+    // Retrieve the function descriptor object...
+    CFunction const &Function = GetFunctionByName(Lexer.GetCurrentLexeme());
+    
+    // Eat the opening parenthesis...
+    ReadToken(CLexer::TOKEN_DELIMITER_OPEN_PARENTHESIS);
+    
+    // Keep parsing parameters, while there are some...
+    while(Lexer.GetLookAheadCharacter() != ')')
+    {
+        // Generate the parameter expression logic...
+        ParseExpression();
+        
+        // Remember the number of parameters we've found...
+      ++unParametersFound;
+        
+        // Ensure local functions accept correct parameter count...
+        if(!Function.bIsHostFunction && unParametersFound > Function.Parameters)
+            throw "too many parameters for local function";
+
+        // A comma follows each parameter, if not the last...
+        if(Lexer.GetLookAheadCharacter() != ')')
+            ReadToken(CLexer::TOKEN_DELIMITER_COMMA);
+    }
+    
+    // Function call terminates with closing brace...
+    ReadToken(CLexer::TOKEN_DELIMITER_CLOSE_PARENTHESIS);
+    
+    // Parameters expected and parameters provided must match for local calls...
+    if(!Function.bIsHostFunction && unParametersFound != Function.Parameters)
+        throw "too few parameters for local function";
+
+    // Generate call instruction for host or local call...
+    InstructionIndex = AddICodeInstruction(
+        CurrentScope, Function.bIsHostFunction ? INSTRUCTION_ICODE_CALLHOST
+                                               : INSTRUCTION_ICODE_CALL);
+
+    // Function index is first and only operand to CALL(HOST) instruction...
+    AddFunctionICodeOperand(CurrentScope, InstructionIndex, Function.Index);
 }
 
 // Parse a host function import...

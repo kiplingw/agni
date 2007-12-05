@@ -355,6 +355,13 @@ namespace Agni
                                             boolean bIsHostFunction) 
                     throw(std::string const);
 
+                // Add function index operand to i-code instruction...
+                void AddFunctionICodeOperand(
+                    IdentifierScope const FunctionIndex, 
+                    InstructionListIndex const InstructionIndex,
+                    IdentifierScope const OperandFunctionIndex) 
+                    throw(std::string const);
+
                 // Add a line of source code or something else into the i-code for human...
                 void AddICodeAnnotation(IdentifierScope FunctionIndex, 
                                         std::string const sAnnotation)
