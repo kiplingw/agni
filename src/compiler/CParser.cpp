@@ -471,8 +471,37 @@ boolean CParser::IsVariableInTable(VariableName Name) const
     return true;
 }
 
+// Is operator an assignment?
+boolean CParser::IsOperatorAssignment(CLexer::Operator const CurrentOperator) 
+    const
+{
+    // Check operator...
+    switch(CurrentOperator)
+    {
+        // Valid assignments...
+        case CLexer::OPERATOR_ASSIGNMENT:
+        case CLexer::OPERATOR_ASSIGNMENT_ADD:
+        case CLexer::OPERATOR_ASSIGNMENT_SUBTRACT:
+        case CLexer::OPERATOR_ASSIGNMENT_MULTIPLY:
+        case CLexer::OPERATOR_ASSIGNMENT_DIVIDE:
+        case CLexer::OPERATOR_ASSIGNMENT_MODULUS:
+        case CLexer::OPERATOR_ASSIGNMENT_EXPONENT:
+        case CLexer::OPERATOR_ASSIGNMENT_CONCATENATE:
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_AND:
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_OR:
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_XOR:
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_SHIFT_LEFT:
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_SHIFT_RIGHT:
+            return true;
+
+        // Not an assignment...
+        default:
+            return false;
+    }
+}
+
 // Is operator logical?
-boolean CParser::IsOperatorLogical(const CLexer::Operator CandidateOperator) 
+boolean CParser::IsOperatorLogical(CLexer::Operator const CandidateOperator) 
     const
 {
     // A relational operator...
@@ -487,7 +516,7 @@ boolean CParser::IsOperatorLogical(const CLexer::Operator CandidateOperator)
 
 
 // Is the operator relational?
-boolean CParser::IsOperatorRelational(const CLexer::Operator CandidateOperator) 
+boolean CParser::IsOperatorRelational(CLexer::Operator const CandidateOperator)
     const
 {
     // A relational operator...
@@ -548,9 +577,170 @@ void CParser::ParseAssignment() throw(std::string const)
     CVariable const &Variable = GetVariableByName(
         VariableName(Lexer.GetCurrentLexeme(), CurrentScope));
 
-    /*
-        TODO: Finish this...
-    */
+    // This is being used as an array...
+    if(Lexer.GetLookAheadCharacter() == '[')
+    {
+        // The size cannot be of a single unit...
+        if(Variable.unSize <= 1)
+            throw "invalid array size";
+
+        // Ingest the opening brace...
+        ReadToken(CLexer::TOKEN_DELIMITER_OPEN_BRACE);
+
+        // There should be an expression before the next closing brace...
+        if(Lexer.GetLookAheadCharacter() == ']')
+            throw "array index has bad expression";
+
+        // Generate the array index expression logic...
+        ParseExpression();
+        
+        // Ingest the closing brace...
+        ReadToken(CLexer::TOKEN_DELIMITER_CLOSE_BRACE);
+        
+        // Remember that this was an array for later...
+        bIsArray = true;
+    }
+    
+    // This is not being used as an array...
+    else
+    {
+        // They've accidentally tried to assign to an array without an index...
+        if(Variable.unSize != 1)
+            throw "you cannot assign to an array with an index specified";
+    }
+    
+    // An assignment did not follow...
+    if(Lexer.GetNextToken() != CLexer::TOKEN_OPERATOR &&
+       !IsOperatorAssignment(Lexer.GetCurrentOperator()))
+        throw "assignment must use one of the assignment operators";
+
+    // Valid assignment operator, remember...
+    else
+        AssignmentOperator = Lexer.GetCurrentOperator();
+
+    // Generate the logic for the expression's value...
+    ParseExpression();
+    
+    // Ingest the end of the statement semicolon...
+    ReadToken(CLexer::TOKEN_DELIMITER_SEMICOLON);
+    
+    // The value gets popped off into first machine register...
+    InstructionIndex = AddICodeInstruction(
+        CurrentScope, INSTRUCTION_ICODE_POP);
+    AddRegisterICodeOperand(CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+
+    // If assigning to an array, the top of the stack contains index...
+    if(bIsArray)
+    {
+        // POP off into second machine register...
+        InstructionIndex = AddICodeInstruction(
+            CurrentScope, INSTRUCTION_ICODE_POP);
+        AddRegisterICodeOperand(
+            CurrentScope, InstructionIndex, REGISTER_ICODE_T1);
+    }
+    
+    // Generate appropriate instruction for the type of assignment operator...
+    switch(AssignmentOperator)
+    {
+        // Vanilla assignment =...
+        case CLexer::OPERATOR_ASSIGNMENT:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_MOV); 
+             break;
+        
+        // Additive assignment +=...
+        case CLexer::OPERATOR_ASSIGNMENT_ADD:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_ADD); 
+             break;
+        
+        // Subtraction assignment -=...
+        case CLexer::OPERATOR_ASSIGNMENT_SUBTRACT:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_SUB); 
+             break;
+        
+        // Multiplication assignment *=...
+        case CLexer::OPERATOR_ASSIGNMENT_MULTIPLY:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_MUL);
+             break;
+        
+        // Division assignment /=...
+        case CLexer::OPERATOR_ASSIGNMENT_DIVIDE:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_DIV); 
+             break;
+        
+        // Modulus assignment %=...
+        case CLexer::OPERATOR_ASSIGNMENT_MODULUS:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_MOD);
+             break;
+
+        // Exponent assignment ^=...
+        case CLexer::OPERATOR_ASSIGNMENT_EXPONENT:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_EXP);
+             break;
+        
+        // Concatenation assignment...
+        case CLexer::OPERATOR_ASSIGNMENT_CONCATENATE:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_CONCAT);
+             break;
+        
+        // Bitwise and assignment...
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_AND:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_AND);
+             break;
+        
+        // Bitwise or assignment |=...
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_OR:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_OR);
+             break;
+        
+        // Bitwise xor assignment #=...
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_XOR:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_XOR);
+             break;
+        
+        // Bitwise shift left assignment <<=...
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_SHIFT_LEFT:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_SHL);
+             break;
+        
+        // Bitwise shift right assignment >>=...
+        case CLexer::OPERATOR_ASSIGNMENT_BITWISE_SHIFT_RIGHT:
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_SHR);
+             break;
+
+        // Internal fault...
+        default:
+            throw "internal fault while parsing expression";
+    }
+    
+    // The first operand is the destination...
+    
+        // Since the assignment was to an array, destination must be treated as
+        //  such by also encoding the index in...
+        if(bIsArray)
+            AddArrayIndexRegisterICodeOperand(
+                CurrentScope, InstructionIndex, Variable.Index, 
+                REGISTER_ICODE_T1);
+
+        // Assignment was not to an array, add destination...
+        else
+            AddVariableICodeOperand(
+                CurrentScope, InstructionIndex, Variable.Index);
+
+    // Second operand is the source... (always Intel style syntax)
+    AddVariableICodeOperand(CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
 }
 
 // Parse a break...

@@ -455,13 +455,17 @@ namespace Agni
                 // Is this a variable in the variable table?
                 boolean IsVariableInTable(VariableName Name) const;
 
+                // Is operator an assignment?
+                boolean IsOperatorAssignment(
+                    CLexer::Operator const CurrentOperator) const;
+
                 // Is operator logical?
                 boolean IsOperatorLogical(
-                    const CLexer::Operator CandidateOperator) const;
+                    CLexer::Operator const CandidateOperator) const;
 
                 // Is the operator relational?
                 boolean IsOperatorRelational(
-                    const CLexer::Operator CandidateOperator) const;
+                    CLexer::Operator const CandidateOperator) const;
 
                 // Parse the various valid forms of token sequences...
                 void ParseAssignment() throw(std::string const);
