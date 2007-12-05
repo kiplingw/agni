@@ -1536,7 +1536,72 @@ void CParser::ParseHost() throw(std::string const)
 // Parse an if block...
 void CParser::ParseIf() throw(std::string const)
 {
-    /* TODO: Finish this */
+    // Variables...
+    InstructionListIndex InstructionIndex   = 0;
+    
+    // Conditional logic can only occur within a function...
+    if(CurrentScope == Global)
+        throw "conditional logic illegal in global scope";
+
+    // Add annotation of the original line of source code...
+    AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
+    
+    // Generate jump target to start of false code block...
+    InstructionListIndex const FalseJumpTargetIndex = GetNextJumpTargetIndex();
+    
+    // Chomp the opening parenthesis...
+    ReadToken(CLexer::TOKEN_DELIMITER_OPEN_PARENTHESIS);
+    
+    // Generate the assembly logic to evaluate the conditional expression...
+    ParseExpression();
+    
+    // Chomp the closing parenthesis...
+    ReadToken(CLexer::TOKEN_DELIMITER_CLOSE_PARENTHESIS);
+    
+    // POP the result of the expression into the first machine register...
+    InstructionIndex = AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_POP);
+    AddRegisterICodeOperand(CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+    
+    // Generate logic to jump if false to false code block start...
+    InstructionIndex = AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JE);
+    AddRegisterICodeOperand(CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+    AddJumpTargetICodeOperand(CurrentScope, InstructionIndex, 
+                              FalseJumpTargetIndex);
+
+    // Generate the true block assembly logic...
+    ParseStatement();
+    
+    // An if block can be optionally followed by an else clause...
+    if(Lexer.GetNextToken() == CLexer::TOKEN_RESERVED_ELSE)
+    {
+        // True block should skip past the false block... JMP SkipToEndOfFalse
+        InstructionListIndex const SkipFalseJumpTargetIndex = 
+            GetNextJumpTargetIndex();
+        InstructionIndex = AddICodeInstruction(
+            CurrentScope, INSTRUCTION_ICODE_JMP);
+        AddJumpTargetICodeOperand(
+            CurrentScope, InstructionIndex, SkipFalseJumpTargetIndex);
+
+        // The false jump target precedes the false code block...
+        AddICodeJumpTarget(CurrentScope, FalseJumpTargetIndex);
+
+        // Generate assembly logic for the false code block...
+        ParseStatement();
+        
+        // Generate the actual skip false code block jump target at the end...
+        AddICodeJumpTarget(CurrentScope, SkipFalseJumpTargetIndex);
+    }
+    
+    // No else block followed...
+    else
+    {
+        // Push the token stream back...
+        Lexer.Rewind();
+        
+        // Without an else block, the false target should follow the true...
+        AddICodeJumpTarget(CurrentScope, FalseJumpTargetIndex);
+    }
 }
 
 // Parse a function return...
@@ -1948,7 +2013,63 @@ void CParser::ParseVariable() throw(std::string const)
 // Parse a while loop...
 void CParser::ParseWhile() throw(std::string const)
 {
-    /* TODO: Finish this */
+    // Variables...
+    InstructionListIndex    InstructionIndex    = 0;
+    Loop                    CurrentLoop         = {0, 0};
+    
+    // Iterative logic only available outside of global scope...
+    if(CurrentScope == Global)
+        throw "iterative logic unavailable in global scope";
+
+    // Add our original line of source as an annotation in the listing...
+    AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
+    
+    // Generate beginning and end loop jump targets...
+    InstructionListIndex const StartJumpTargetIndex = GetNextJumpTargetIndex();
+    InstructionListIndex const EndJumpTargetIndex = GetNextJumpTargetIndex();
+    
+    // Initiate the loop with the start jump target preceding its code block...
+    AddICodeJumpTarget(CurrentScope, StartJumpTargetIndex);
+    
+    // Chomp the opening parenthesis...
+    ReadToken(CLexer::TOKEN_DELIMITER_OPEN_PARENTHESIS);
+    
+    // Generate assembly logic for the conditional expression...
+    ParseStatement();
+    
+    // Chomp the closing parenthesis...
+    ReadToken(CLexer::TOKEN_DELIMITER_CLOSE_PARENTHESIS);
+    
+    // POP result into first machine register...
+    InstructionIndex = AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_POP);
+    AddRegisterICodeOperand(CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+    
+    // JE _RegisterT0, 0 EndJumpTargetIndex...
+    InstructionIndex = AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JE);
+    AddRegisterICodeOperand(CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+    AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+    AddJumpTargetICodeOperand(
+        CurrentScope, InstructionIndex, EndJumpTargetIndex);
+
+    // Remember new loop instance beginning and end for parser to recover from
+    //  its body...
+    CurrentLoop.StartTargetIndex    = StartJumpTargetIndex;
+    CurrentLoop.EndTargetIndex      = EndJumpTargetIndex;
+    LoopStack.push(CurrentLoop);
+
+    // Generate assembly listing for the actual loop body...
+    ParseStatement();
+
+    // Done with the loop book keeping information for this level of loop...
+    LoopStack.pop();
+
+    // JMP StartJumpTargetIndex... (to re-evaluate conditional expression)
+    InstructionIndex = AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_JMP);
+    AddJumpTargetICodeOperand(
+        CurrentScope, InstructionIndex, StartJumpTargetIndex);
+
+    // The end jump target should get placed here now...
+    AddICodeJumpTarget(CurrentScope, EndJumpTargetIndex);
 }
 
 // Read a token and verify it is what was expected...
