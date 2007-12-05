@@ -1607,7 +1607,76 @@ void CParser::ParseIf() throw(std::string const)
 // Parse a function return...
 void CParser::ParseReturn() throw(std::string const)
 {
-    /* TODO: Finish this */
+    // Variables...
+    InstructionListIndex    InstructionIndex;
+    
+    // You can't return within the global scope...
+    if(CurrentScope == Global)
+        throw "you cannot return from within the global scope";
+
+    // Annotate assembly listing with the original line...
+    AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
+    
+    // Programmer wanted to return a value...
+    if(Lexer.GetLookAheadCharacter() != ';')
+    {
+        // Generate assembly listing for the return expression...
+        ParseExpression();
+        
+        // A main function is present and that is what we are returning from...
+        if(MainHeader.unMainIndex != (unsigned) -1 &&
+           MainHeader.unMainIndex == CurrentScope)
+        {
+            // Result should be popped off into first machine register...
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_POP);
+            AddRegisterICodeOperand(
+                CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+        }
+        
+        // We are not returning from the main function...
+        else
+        {
+            // Result should be popped off into return value machine register...
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_POP);
+            AddRegisterICodeOperand(
+                CurrentScope, InstructionIndex, REGISTER_ICODE_RETURN);
+        }
+    }
+    
+    // No value specified to return...
+    else
+    {
+        // A main function is present and that is what we are returning from...
+        if(MainHeader.unMainIndex != (unsigned) -1 &&
+           MainHeader.unMainIndex == CurrentScope)    
+        {
+            // Clear the first machine register...
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_MOV);
+            AddRegisterICodeOperand(
+                CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+            AddIntegerICodeOperand(CurrentScope, InstructionIndex, 0);
+        }
+    }
+    
+    // Time for the RET / EXIT instruction...
+    
+        // This is the main function exiting...
+        if(MainHeader.unMainIndex != (unsigned) -1 &&
+           MainHeader.unMainIndex == CurrentScope)
+        {
+            // EXIT _RegisterT0...
+            InstructionIndex = AddICodeInstruction(
+                CurrentScope, INSTRUCTION_ICODE_EXIT);
+            AddRegisterICodeOperand(
+                CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+        }
+        
+        // This is a function other than main exiting...
+        else
+            AddICodeInstruction(CurrentScope, INSTRUCTION_ICODE_RET);
 }
 
 // Parse a statement...
