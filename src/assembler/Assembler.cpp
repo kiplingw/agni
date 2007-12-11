@@ -1910,7 +1910,7 @@ void Assembler::ErrorListing(const char *pszFormat, ...)
         va_end(pArgumentList);
 
     // Output...
-    std::cout << UserParameters.GetProcessName() << ": " << unLexerLine + 1
+    std::cout << UserParameters.GetProcessName() << ":" << unLexerLine + 1
               << ": error: " << szBuffer << std::endl;
 
     // Cleanup all resources, reset state, and shutdown assembler...

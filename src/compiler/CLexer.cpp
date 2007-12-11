@@ -7,6 +7,7 @@
 
 // Includes...
 #include "CLexer.h"
+#include <sstream>
 
 // Using the Agni namespace...
 using namespace Agni;
@@ -106,6 +107,23 @@ uint32 CLexer::GetCurrentHumanLineIndex() const
 {
     // Humans count line numbers starting from one...
     return GetCurrentLineIndex() + 1;
+}
+
+// Get the current line starting from one...
+std::string const CLexer::GetCurrentHumanLineString() const
+{
+    // String stream object to stuff line number into...
+    std::stringstream StringStream;
+    
+    // The output buffer...
+    std::string sBuffer;
+    
+    // Convert line number to string
+    StringStream << GetCurrentHumanLineIndex();
+    StringStream >> sBuffer;
+    
+    // Done...
+    return sBuffer;
 }
 
 // Get the current lexeme...

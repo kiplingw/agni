@@ -85,8 +85,21 @@ CParser::IdentifierScope CParser::AddFunction(FunctionName Name,
         FunctionTable_KeyByName.insert(make_pair(Name, NewFunction));
 
         // Also add this to our other function table using the index as key...
+        
+            // Since we want a reference, get location of function in KeyByName
+            //  hash table...
+
+                // We need an iterator...
+                std::map<FunctionName, CFunction>::iterator Location;
+
+                // Find the function...
+                Location = FunctionTable_KeyByName.find(Name);
+
+                    // Not found... (this should never happen)
+                    assert(Location != FunctionTable_KeyByName.end());
+
         FunctionTable_KeyByIndex.insert(
-            std::make_pair(NewFunction.GetIndex(), &NewFunction));
+            std::make_pair(NewFunction.GetIndex(), &Location->second));
 
     // Return the new function's index...
     return NewFunction.GetIndex();
@@ -166,7 +179,8 @@ void CParser::AddICodeOperand(IdentifierScope FunctionIndex,
 
     // Verify that this is an instruction...
     if(Node.Type != ICodeNode::INSTRUCTION)
-        throw "internal fault, cannot add operand to non-instructional node";
+        throw std::string("internal fault, cannot add operand to"
+                          " non-instructional node");
 
     // Now set the operand...
     Node.Instruction.OperandList.push_back(Operand);
@@ -339,7 +353,7 @@ CParser::CFunction &CParser::GetFunctionByIndex(IdentifierScope Index)
 
         // Not found...
         if(Location == FunctionTable_KeyByIndex.end())
-            throw "internal fault, function index not found";
+            throw std::string("internal fault, function index not found");
           
     // Return the function object...
     return *(Location)->second;
@@ -357,7 +371,7 @@ CParser::CFunction &CParser::GetFunctionByName(FunctionName Name)
 
         // Not found...
         if(Location == FunctionTable_KeyByName.end())
-            throw "internal fault, function name not found";
+            throw std::string("internal fault, function name not found");
 
     // Return the function object...
     return Location->second;
@@ -380,7 +394,7 @@ CParser::ICodeNode &CParser::GetICodeNodeByImplicitIndex(
     {
         // Out of bounds...
         if(Location == Function.ICodeList.end())
-            throw "internal fault, instruction index out of bounds";
+            throw std::string("internal fault, instruction index out of bounds");
 
         // Not there yet, try again...
       ++Index;
@@ -439,7 +453,7 @@ CParser::CVariable &CParser::GetVariableByIndex(VariableTableIndex Index)
 
         // Not found...
         if(Location == VariableTable_KeyByIndex.end())
-            throw "internal fault, variable index not found";
+            throw std::string("internal fault, variable index not found");
           
     // Return the variable object...
     return *(Location)->second;
@@ -560,20 +574,36 @@ void CParser::Parse() throw(std::string const)
     // Commence parsing in the global scope...
     CurrentScope = Global;
     
-    // Parse each statement in succession...
-    for(;;)
+    // Try to parse...
+    try
     {
-        // Parse the next statement...
-        ParseStatement();
-        
-        // Tokenizer has bottomed out, we're done...
-        if(Lexer.GetNextToken() == CLexer::TOKEN_END_OF_STREAM)
-            break;
-        
-        // Not done yet, prepare for the next statement...
-        else
-            Lexer.Rewind();     
+        // Parse each statement in succession...
+        for(;;)
+        {
+            // Parse the next statement...
+            ParseStatement();
+            
+            // Tokenizer has bottomed out, we're done...
+            if(Lexer.GetNextToken() == CLexer::TOKEN_END_OF_STREAM)
+                break;
+            
+            // Not done yet, prepare for the next statement...
+            else
+                Lexer.Rewind();     
+        }
     }
+    
+        // Failed to parse...
+        catch(std::string const sReason)
+        {
+            // Prepend line number...
+            std::string const sBetterReason = 
+                std::string(":") + Lexer.GetCurrentHumanLineString() + 
+                std::string(": error: ") + sReason;
+
+            // Pass up the error chain...
+            throw sBetterReason;
+        }
 }
 
 // Parse an assignment...
@@ -586,7 +616,7 @@ void CParser::ParseAssignment() throw(std::string const)
 
     // Assignments only make sense within a function...
     if(CurrentScope == Global)
-        throw "assignments can only occur within a function";
+        throw std::string("assignments can only occur within a function");
 
     // Annotate the assembly listing with the original source line...
     AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
@@ -600,14 +630,14 @@ void CParser::ParseAssignment() throw(std::string const)
     {
         // The size cannot be of a single unit...
         if(Variable.unSize <= 1)
-            throw "invalid array size";
+            throw std::string("invalid array size");
 
         // Ingest the opening brace...
         ReadToken(CLexer::TOKEN_DELIMITER_OPEN_BRACE);
 
         // There should be an expression before the next closing brace...
         if(Lexer.GetLookAheadCharacter() == ']')
-            throw "array index has bad expression";
+            throw std::string("array index has bad expression");
 
         // Generate the array index expression logic...
         ParseExpression();
@@ -624,13 +654,14 @@ void CParser::ParseAssignment() throw(std::string const)
     {
         // They've accidentally tried to assign to an array without an index...
         if(Variable.unSize != 1)
-            throw "you cannot assign to an array with an index specified";
+            throw std::string("you cannot assign to an array with an index"
+                              " specified");
     }
     
     // An assignment did not follow...
     if(Lexer.GetNextToken() != CLexer::TOKEN_OPERATOR &&
        !IsOperatorAssignment(Lexer.GetCurrentOperator()))
-        throw "assignment must use one of the assignment operators";
+        throw std::string("assignment must use one of the assignment operators");
 
     // Valid assignment operator, remember...
     else
@@ -740,7 +771,7 @@ void CParser::ParseAssignment() throw(std::string const)
 
         // Internal fault...
         default:
-            throw "internal fault while parsing expression";
+            throw std::string("internal fault while parsing expression");
     }
     
     // The first operand is the destination...
@@ -766,7 +797,8 @@ void CParser::ParseBreak() throw(std::string const)
 {
     // You can only break when within a loop or switch...
     if(LoopStack.empty())
-        throw "break keyword can only be used within a loop or switch";
+        throw std::string("break keyword can only be used within a loop or"
+                          " switch");
 
     // Annotate the assembly listing with the original line...
     AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
@@ -790,7 +822,7 @@ void CParser::ParseCodeBlock() throw(std::string const)
 {
     // Code blocks cannot exist in the global scope...
     if(CurrentScope == Global)
-        throw "global code blocks illegal";
+        throw std::string("global code blocks illegal");
 
     // Parse every statement within this block until we read its end...
     while(Lexer.GetLookAheadCharacter() != '}')
@@ -805,7 +837,7 @@ void CParser::ParseContinue() throw(std::string const)
 {
     // You can only break when within a loop or switch...
     if(LoopStack.empty())
-        throw "continue keyword can only be used within a loop";
+        throw std::string("continue keyword can only be used within a loop");
 
     // Annotate the assembly listing with the original line...
     AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
@@ -946,7 +978,8 @@ void CParser::ParseExpression() throw(std::string const)
 
                 // This should never happen, but also appeases the compiler...
                 default:
-                    throw "internal fault, unknown relational operator";
+                    throw std::string("internal fault, unknown relational"
+                                      " operator");
             }
             
             // Jump operands are TO, T1, TrueTarget
@@ -1090,7 +1123,8 @@ void CParser::ParseExpression() throw(std::string const)
                 
                 // This should never happen, but also appeases the compiler...
                 default:
-                    throw "internal fault, unknown logical operator";
+                    throw std::string("internal fault, unknown logical"
+                                      " operator");
             }
         }
     }
@@ -1210,14 +1244,14 @@ void CParser::ParseFactor() throw(std::string const)
                 {
                     // Make sure this is an array, since arrays must be > 1 size...
                     if(Variable.unSize <= 1)
-                        throw "invalid array";
+                        throw std::string("invalid array");
 
                     // Chomp the opening brace...
                     ReadToken(CLexer::TOKEN_DELIMITER_OPEN_BRACE);
                     
                     // An expression of some kind must follow before parsing...
                     if(Lexer.GetLookAheadCharacter() == ']')
-                        throw "index required for array";
+                        throw std::string("index required for array");
 
                     // Parse expression...
                     ParseExpression();
@@ -1246,7 +1280,7 @@ void CParser::ParseFactor() throw(std::string const)
                 {
                     // Verify this is a variable...
                     if(Variable.unSize != 1)
-                        throw "expected an array index";
+                        throw std::string("expected an array index");
                     
                     // PUSH the variable onto the stack...
                     InstructionIndex = AddICodeInstruction(
@@ -1292,7 +1326,7 @@ void CParser::ParseFactor() throw(std::string const)
 
         // Any other token is considered invalid within a factor...
         default:
-            throw "junk input";
+            throw std::string("junk input");
     }
 
     // A unary operator is pending...
@@ -1369,7 +1403,7 @@ void CParser::ParseFactor() throw(std::string const)
                 
                 // Something is busted...
                 default:
-                    throw "internal fault while parsing factor";
+                    throw std::string("internal fault while parsing factor");
             }
             
             // The operand is the result in the first machine register...
@@ -1390,7 +1424,7 @@ void CParser::ParseFor() throw(std::string const)
 {
     // We cannot have a for loop in the global scope...
     if(CurrentScope == Global)
-        throw "for loops are forbidden from the global scope";
+        throw std::string("for loops are forbidden from the global scope");
 
     // Annotate the listing with the original line of code...
     AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
@@ -1398,7 +1432,7 @@ void CParser::ParseFor() throw(std::string const)
     /*
         TODO: Implement for loop parser...
     */
-        throw "for loop is not implemented";
+        throw std::string("for loop is not implemented");
 }
 
 // Parse a function definition...
@@ -1406,7 +1440,7 @@ void CParser::ParseFunction() throw(std::string const)
 {
     // No nested functions permitted...
     if(CurrentScope != Global)
-        throw "nested functions are not permitted";
+        throw std::string("nested functions are not permitted");
 
     // Read the function identifier...
     ReadToken(CLexer::TOKEN_IDENTIFIER);
@@ -1423,7 +1457,7 @@ void CParser::ParseFunction() throw(std::string const)
     {
         // The function is the entry point, which cannot accept parameters...
         if(MainHeader.unMainIndex == CurrentScope)
-            throw "entry point cannot accept parameters (yet)";
+            throw std::string("entry point cannot accept parameters (yet)");
 
         // Create a stack to store the parameters, reading them left to right...
         std::stack<std::string> ParametersLeftToRight;
@@ -1490,7 +1524,7 @@ void CParser::ParseFunctionCall() throw(std::string const)
         
         // Ensure local functions accept correct parameter count...
         if(!Function.bIsHostFunction && unParametersFound > Function.Parameters)
-            throw "too many parameters for local function";
+            throw std::string("too many parameters for local function");
 
         // A comma follows each parameter, if not the last...
         if(Lexer.GetLookAheadCharacter() != ')')
@@ -1502,7 +1536,7 @@ void CParser::ParseFunctionCall() throw(std::string const)
     
     // Parameters expected and parameters provided must match for local calls...
     if(!Function.bIsHostFunction && unParametersFound != Function.Parameters)
-        throw "too few parameters for local function";
+        throw std::string("too few parameters for local function");
 
     // Generate call instruction for host or local call...
     InstructionIndex = AddICodeInstruction(
@@ -1541,7 +1575,7 @@ void CParser::ParseIf() throw(std::string const)
     
     // Conditional logic can only occur within a function...
     if(CurrentScope == Global)
-        throw "conditional logic illegal in global scope";
+        throw std::string("conditional logic illegal in global scope");
 
     // Add annotation of the original line of source code...
     AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
@@ -1612,7 +1646,7 @@ void CParser::ParseReturn() throw(std::string const)
     
     // You can't return within the global scope...
     if(CurrentScope == Global)
-        throw "you cannot return from within the global scope";
+        throw std::string("you cannot return from within the global scope");
 
     // Annotate assembly listing with the original line...
     AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());
@@ -1702,7 +1736,7 @@ void CParser::ParseStatement() throw(std::string const)
         case CLexer::TOKEN_END_OF_STREAM:
             
             // Kill the parser...
-            throw "unexpected end of file";
+            throw std::string("unexpected end of file");
 
         // New code block has just begun, a '{' signals this...
         case CLexer::TOKEN_DELIMITER_OPEN_CURLY_BRACE:
@@ -1797,7 +1831,7 @@ void CParser::ParseStatement() throw(std::string const)
             
             // Invalid...
             else
-                throw "invalid identifier";
+                throw std::string("invalid identifier");
 
             // Done...
             break;
@@ -1805,7 +1839,7 @@ void CParser::ParseStatement() throw(std::string const)
         
         // Nothing else is considered a valid statement...
         default:
-            throw "unexpected input";
+            throw std::string("unexpected input");
     }
 }
 
@@ -1880,8 +1914,8 @@ void CParser::ParseSubExpression() throw(std::string const)
 
             // This should never happen...
             default:
-                throw "internal fault, unknown binary operator in sub"
-                      " expression";
+                throw std::string("internal fault, unknown binary operator in"
+                                  " subexpression");
         }
 
         // Binary operator instruction also needs its two operands...
@@ -2023,7 +2057,8 @@ void CParser::ParseTerm() throw(std::string const)
 
             // This should never happen...
             default:
-                throw "internal fault, unknown binary operator in term";
+                throw std::string("internal fault, unknown binary operator in"
+                                  " term");
         }
 
         // Binary operator instruction also needs its two operands...
@@ -2063,7 +2098,7 @@ void CParser::ParseVariable() throw(std::string const)
         
         // Make sure the value is >= 1
         if(::atoi(Lexer.GetCurrentLexeme().c_str()) >= 1)
-            throw "invalid array size";
+            throw std::string("invalid array size");
 
         // Store the size...
         unSize = ::atoi(Lexer.GetCurrentLexeme().c_str());
@@ -2088,7 +2123,7 @@ void CParser::ParseWhile() throw(std::string const)
     
     // Iterative logic only available outside of global scope...
     if(CurrentScope == Global)
-        throw "iterative logic unavailable in global scope";
+        throw std::string("iterative logic unavailable in global scope");
 
     // Add our original line of source as an annotation in the listing...
     AddICodeAnnotation(CurrentScope, Lexer.GetCurrentSourceLine());

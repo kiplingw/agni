@@ -168,6 +168,9 @@ namespace Agni
 
                 // Get the current line starting from one...
                 uint32                  GetCurrentHumanLineIndex() const;
+                
+                // Get the current line starting from one...
+                std::string const       GetCurrentHumanLineString() const;
 
                 // Get the current line starting from zero...
                 uint32                  GetCurrentLineIndex() const;

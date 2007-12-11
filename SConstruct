@@ -40,9 +40,11 @@ env.Alias('assembler', assembler)
 
 # Build compiler...
 compiler = env.Program('agc', ['src/compiler/Main.cpp',
+                       'src/compiler/CAgniMachineTarget.cpp',
                        'src/compiler/Compiler.cpp',
                        'src/compiler/CLexer.cpp',
                        'src/compiler/CLoader.cpp',
+                       'src/compiler/CMachineTarget_Base.cpp',
                        'src/compiler/CParser.cpp',
                        'src/compiler/CPreProcessor.cpp'])
 env.Alias('compiler', compiler)

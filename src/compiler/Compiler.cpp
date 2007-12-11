@@ -5,8 +5,31 @@
 */
 
 // Includes...
-#include "Compiler.h"
-#include <getopt.h>
+    
+    // Compiler class...
+    #include "Compiler.h"
+    
+    // Command line parsing...
+    #include <getopt.h>
+    
+    // I/O streams...
+    #include <iostream>
+    
+    // Loader class...
+    #include "CLoader.h"
+
+    // Pre-processor class...
+    #include "CPreProcessor.h"
+
+    // Lexer class...
+    #include "CLexer.h"
+    
+    // Parser class...
+    #include "CParser.h"
+    
+    // Machine target abstract base class and supported backend...
+    #include "CMachineTarget_Base.h"
+    #include "CAgniMachineTarget.h"
 
 // Using the Agni namespace...
 using namespace Agni;
@@ -27,7 +50,7 @@ bool Compiler::Compile()
     unsigned int                unIndex                 = 0;
     std::string                 sRootPath;
 
-    // Try to compile...
+    // Try to load and prepare environment...
     try
     {
         // Verify parameters...
@@ -75,7 +98,22 @@ bool Compiler::Compile()
             
             // Load the source code and save it in a linked list...
             SourceCodeLinkedList = Loader.Load();
+    }
 
+        // Failed to load source and prepare environment...
+        catch(std::string const sReason)
+        {
+            // Output error message...
+            std::cout << UserParameters.GetProcessName() << ": " << sReason 
+                      << std::endl;
+
+            // Abort...
+            return false;
+        }
+
+    // Try to pre-process and parse source code...
+    try
+    {
         // If requested, display token stream to stdout...
         if(UserParameters.ShouldDumpTokenStream())
         {
@@ -161,7 +199,14 @@ bool Compiler::Compile()
             
             // AgniVirtualMachine target backend selected...
             if(UserParameters.GetMachineTarget() == "avm")
-                Verbose("AgniVirtualMachine target backend selected...");
+            {
+                // Be verbose...
+                Verbose("avm (AgniVirtualMachine) target backend selected...");
+                
+                // Initialize backend...
+                CAgniMachineTarget AgniMachineTarget(
+                    Parser, UserParameters.GetOutputFile());
+            }
             
             // Unsupported machine target...
             else
@@ -169,12 +214,11 @@ bool Compiler::Compile()
                       ": unknown machine target";
     }
 
-        // Compilation failed for some reason...
+        // Preprocessor or parser failed for some reason...
         catch(std::string const sReason)
         {
             // Output error message...
-            std::cout << UserParameters.GetProcessName() << ": " << sReason 
-                      << std::endl;
+            std::cout << UserParameters.GetInputFile() << sReason << std::endl;
 
             // Abort...
             return false;
@@ -260,7 +304,6 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
     // Variables...
     char    cOption = 0;
     int     nOption = 0;
-    int     nTemp   = 0;
 
     // Extract compiler executable name...
     sProcessName = ppszArguments[0];
@@ -370,21 +413,9 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
 
             // Output...
             case 'o':
-                
-                // Extension length...
-                nTemp = strlen("." AGNI_FILE_EXTENSION_LISTING);
 
                 // Store output file...
                 sOutputFile = optarg;
-
-                // Check to make sure contains proper file extension...
-                if(sOutputFile.rfind("." AGNI_FILE_EXTENSION_LISTING, 
-                                     sOutputFile.length() - 1, nTemp) ==
-                   std::string::npos)
-                {
-                    // Append it then...
-                    sOutputFile += "." AGNI_FILE_EXTENSION_LISTING;
-                }
 
                 // Done...
                 break;

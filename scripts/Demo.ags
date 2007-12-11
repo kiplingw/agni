@@ -1,0 +1,14 @@
+/*
+    Demo Agni script to demonstrate features as well as to test out compiler
+    and assembler.
+*/
+
+// Host API functions...
+host PrintString();
+
+// Entry point...
+func Main()
+{
+    PrintString("Dicky Chow, tell me how.");
+}
+

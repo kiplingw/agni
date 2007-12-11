@@ -161,7 +161,7 @@ std::vector<std::string> CPreProcessor::Process()
         {
             // Generate partial, though useful, error message...
             std::ostringstream StringStream;
-            StringStream << unLine << ": " << sReason;
+            StringStream << ":" << unLine << ": error: " << sReason;
 
             // Pass message to compiler's higher level exception handler...
             throw StringStream.str();
