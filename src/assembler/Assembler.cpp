@@ -3710,6 +3710,7 @@ bool Assembler::Parameters::ParseCommandLine(
         opterr = 0;
 
         // Grab an option...
+        /* cs.duke.edu/courses/spring04/cps108/resources/getoptman.html */
         cOption = getopt_long(nArguments, ppszArguments, "ha:O:o:Vv",
                               LongOptions, &nOptionIndex);
 
@@ -3830,8 +3831,8 @@ void Assembler::Parameters::PrintHelp() const
 {
     // Display help...
     std::cout << 
-        "Usage: aa [option(s)] [input-file] [output-file]\n"
-        "Purpose: Provides AgniVirtualMachine backend to AgniCompiler...\n\n"
+        "Usage: aga [option(s)] [input-file] [output-file]\n"
+        "Purpose: Provides avm target backend to AgniCompiler...\n\n"
         " Options:\n"
         "  -a --assemble=<infile>       Input file\n"
         "  -h --help                    Print this help message\n"
@@ -3844,7 +3845,7 @@ void Assembler::Parameters::PrintHelp() const
         "  OUTFILE can be \"stdout\" or a file name. Default is \"stdout\".\n\n"
 
         " Examples:\n"
-        "  aa -a MyAssemblyListing.agl -o MyGeneratedExecutable\n\n"
+        "  aga -a MyAssemblyListing.agl -o MyGeneratedExecutable\n\n"
 
         " AgniAssembler comes with NO WARRANTY, to the extent permitted by\n"
         " law. You may redistribute copies of AgniAssembler. Just use your\n"

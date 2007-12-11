@@ -66,7 +66,10 @@ namespace Agni
                         
                         // Get the input file name...
                         std::string const  &GetInputFile() const;
-                        
+
+                        // Get the machine target...
+                        std::string const  &GetMachineTarget() const;
+
                         // Get the optimization level...
                         uint8 const         GetOptimizationLevel() const;
                         
@@ -107,6 +110,9 @@ namespace Agni
 
                         // Input file name...
                         std::string sInputFile;
+
+                        // Machine target...
+                        std::string sMachineTarget;
 
                         // Optimization level...
                         uint8       OptimizationLevel;

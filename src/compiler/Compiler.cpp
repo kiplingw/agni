@@ -152,9 +152,21 @@ bool Compiler::Compile()
             Verbose("generating i-code...");
 
             // Create parser...
-//            CParser Parser(SourceCode);
+            CParser Parser(SourceCode);
 
             // Parse source code...
+            Parser.Parse();
+            
+        // Emit the i-code to selected machine target...
+            
+            // AgniVirtualMachine target backend selected...
+            if(UserParameters.GetMachineTarget() == "avm")
+                Verbose("AgniVirtualMachine target backend selected...");
+            
+            // Unsupported machine target...
+            else
+                throw UserParameters.GetProcessName() + 
+                      ": unknown machine target";
     }
 
         // Compilation failed for some reason...
@@ -196,13 +208,21 @@ Compiler::~Compiler()
 
 // Parameters constructor...
 Compiler::Parameters::Parameters()
-    : OptimizationLevel(0),
+    : sMachineTarget("avm"),
+      OptimizationLevel(0),
       bDumpTokenStream(false),
       bPreProcessOnly(false),
       bStop(false),
       bVerbose(false)
 {
 
+}
+
+// Get the machine target...
+std::string const &Compiler::Parameters::GetMachineTarget() const
+{
+    // Return it...
+    return sMachineTarget;
 }
 
 // Get the process name...
@@ -264,6 +284,9 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
             // Compile: File name as mandatory parameter...
             {"compile", required_argument, NULL, 'c'},
 
+            // Machine: Takes one mandatory parameter...
+            {"machine", required_argument, NULL, 'm'},
+
             // Optimization: Takes one mandatory parameter...
             {"optimization", required_argument, NULL, 'O'},
 
@@ -293,7 +316,8 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
         opterr = 0;
 
         // Grab an option...
-        cOption = getopt_long(nArguments, ppszArguments, "hc:O:o:PSVv",
+        /* cs.duke.edu/courses/spring04/cps108/resources/getoptman.html */
+        cOption = getopt_long(nArguments, ppszArguments, "hc:m:O:o:PSVv",
                               LongOptions, &nOptionIndex);
 
             // End of option list...
@@ -327,6 +351,15 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
                 // Display help and recommend no more processing...
                 PrintHelp();
                 return false;
+            
+            // Machine...
+            case 'm':
+            
+                // Remember selected target...
+                sMachineTarget = optarg;
+                
+                // Done...
+                break;
 
             // Optimization...
             case 'O': 
@@ -428,12 +461,13 @@ void Compiler::Parameters::PrintHelp() const
 {
     // Display help...
     std::cout << 
-            "Usage: ac [option(s)] [input-file] [output-file]\n"
+            "Usage: agc [option(s)] [input-file] [output-file]\n"
             "Purpose: Compile Agni script, assemble into Agni executable...\n\n"
             " Options:\n"
             "  -c --compile=<infile>        Input file\n"
             "  -h --help                    Print this help message\n"
             "  -k --dump-token-stream       Dump the token stream to stdout\n"
+            "  -m --machine=<target>        Select target (avm, i386, ppc, etc.)\n"
             "  -O --optimization=<level>    Optimization level\n"
             "  -o --output=<outfile>        Name output file\n"
             "  -P --preprocess              Print preprocessed form only\n"
@@ -445,7 +479,7 @@ void Compiler::Parameters::PrintHelp() const
             "  OUTFILE can be \"stdout\" or a file name. Default is \"stdout\".\n\n"
 
             " Examples:\n"
-            "  ac -c MyScript.ags -o MyGeneratedExecutable\n\n"
+            "  agc -m avm -c MyScript.ags -o MyGeneratedExecutable\n\n"
 
             " AgniCompiler comes with NO WARRANTY, to the extent permitted by\n"
             " law. You may redistribute copies of AgniCompiler. Just use your\n"
