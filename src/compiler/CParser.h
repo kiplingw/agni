@@ -153,7 +153,7 @@ namespace Agni
 
                 // Scope...
                 typedef uint32                          IdentifierScope;
-                typedef enum _Scopes
+                typedef enum Scope
                 {
                     Global          = 0
                     /* i > Global to denote association with ith function */
@@ -446,7 +446,8 @@ namespace Agni
                 std::string const GetStringByIndex(StringTableIndex const Index) 
                     const;
 
-                // Get variable by name, or throw an error...
+                // Get variable by name at requested scope / global, or throw 
+                //  an error...
                 CVariable &GetVariableByName(VariableName Name) 
                     throw(std::string const);
                 
@@ -461,7 +462,8 @@ namespace Agni
                 // Is this a function in the function table?
                 boolean IsFunctionInTable(FunctionName Name) const;
                 
-                // Is this a variable in the variable table?
+                // Is this a variable in the variable table at requested 
+                //  scope / global?
                 boolean IsVariableInTable(VariableName Name) const;
 
                 // Is operator an assignment?

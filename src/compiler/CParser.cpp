@@ -18,9 +18,9 @@ using namespace Agni;
     CParser::IdentifierScope 
         CParser::CFunction::NextAvailableFunctionIndex = 1;
 
-    // Variable indicies begin at one, since zero denotes global scope...
+    // Variable indicies begin at zero...
     CParser::VariableTableIndex 
-        CParser::CVariable::NextAvailableVariableIndex = 1;
+        CParser::CVariable::NextAvailableVariableIndex = 0;
 
 // Default constructor...
 CParser::CParser(std::vector<std::string> &InputSourceCode)
@@ -98,8 +98,9 @@ CParser::IdentifierScope CParser::AddFunction(FunctionName Name,
                     // Not found... (this should never happen)
                     assert(Location != FunctionTable_KeyByName.end());
 
-        FunctionTable_KeyByIndex.insert(
-            std::make_pair(NewFunction.GetIndex(), &Location->second));
+            // Now add reference in the table keyed by index...
+            FunctionTable_KeyByIndex.insert(
+                std::make_pair(NewFunction.GetIndex(), &Location->second));
 
     // Return the new function's index...
     return NewFunction.GetIndex();
@@ -321,8 +322,8 @@ CParser::VariableTableIndex CParser::AddVariable(VariableName Name,
                                                  CVariable::IdentifierType Type)
     throw(std::string const)
 {
-    // Check if the <identifier, scope> already exist in table...
-    if(VariableTable_KeyByName.find(Name) != VariableTable_KeyByName.end())
+    // Check if the <identifier, local scope / Global> already exist in table...
+    if(IsVariableInTable(Name))
         throw "variable '" + Name.first + "' already declared";
 
     // Add new variable to table...
@@ -332,10 +333,24 @@ CParser::VariableTableIndex CParser::AddVariable(VariableName Name,
     
         // Add it to the variable table using name as hash key...
         VariableTable_KeyByName.insert(std::make_pair(Name, NewVariable));
-        
+
         // Also add this to our other variable table using index as key...
-        VariableTable_KeyByIndex.insert(
-            std::make_pair(NewVariable.GetIndex(), &NewVariable));
+
+            // Since we want a reference, get location of function in KeyByName
+            //  hash table...
+
+                // We need an iterator...
+                std::map<VariableName, CVariable>::iterator Location;
+
+                // Find the variable...
+                Location = VariableTable_KeyByName.find(Name);
+
+                    // Not found... (this should never happen)
+                    assert(Location != VariableTable_KeyByName.end());
+
+            // Now add reference in the table keyed by index...
+            VariableTable_KeyByIndex.insert(
+                std::make_pair(NewVariable.GetIndex(), &Location->second));
     
     // Return the variable index to caller...
     return NewVariable.GetIndex();
@@ -430,22 +445,27 @@ std::string const CParser::GetStringByIndex(
     return StringTableVector.at(Index);
 }
 
-// Get variable via name, or throw an error...
+// Get variable by name at requested scope / global, or throw an error...
 CParser::CVariable &CParser::GetVariableByName(VariableName Name) 
     throw(std::string const)
 {
     // Variables...
     std::map<VariableName, CVariable>::iterator Location;
 
-    // Find the variable...
-    Location = VariableTable_KeyByName.find(Name);
+    // Try to find the variable first with requested scope...
+    if(VariableTable_KeyByName.end() != 
+       (Location = VariableTable_KeyByName.find(Name)))
+        return Location->second;
 
-        // Not found...
-        if(Location == VariableTable_KeyByName.end())
-            throw Name.first + "was not declared";
+    // Not found, so try global scope then...
+    else if(VariableTable_KeyByName.end() != 
+            (Location = VariableTable_KeyByName.find(
+                std::make_pair(Name.first, Global))))
+        return Location->second;
 
-    // Return the variable object...
-    return Location->second;
+    // Not found in either local or global scope...
+    else
+        throw Name.first + "was not declared";
 }
             
 // Get variable by index, or throw an error...
@@ -493,21 +513,26 @@ boolean CParser::IsFunctionInTable(FunctionName Name) const
     return true;
 }
 
-// Is this a variable in the variable table?
+// Is this a variable in the variable table at requested scope / global?
 boolean CParser::IsVariableInTable(VariableName Name) const
 {
-    // Variables...
-    std::map<VariableName, CVariable>::const_iterator   Location;
+    // Iterator...
+    std::map<VariableName, CVariable>::const_iterator Location;
 
-    // Find the variable...
-    Location = VariableTable_KeyByName.find(Name);
+    // Try to find the variable first with requested scope...
+    if(VariableTable_KeyByName.end() != 
+        (Location = VariableTable_KeyByName.find(Name)))
+        return true;
 
-        // Not found...
-        if(Location == VariableTable_KeyByName.end())
-            return false;
+    // Not found, so try global scope then...
+    else if(VariableTable_KeyByName.end() != 
+        (Location = VariableTable_KeyByName.find(
+            std::make_pair(Name.first, Global))))
+        return true;
 
-    // Found...
-    return true;
+    // Not found in either local or global scope...
+    else
+        return false;
 }
 
 // Is operator an assignment?
