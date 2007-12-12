@@ -20,16 +20,16 @@
     #include "AgniCommonDefinitions.h"
 
     // File I/O...
-    #include <stdio.h>
+    #include <cstdio>
 
     // Memory allocation...
-    #include <stdlib.h>
+    #include <cstdlib>
 
     // String manipulation...
-    #include <string.h>
+    #include <cstring>
 
     // Exponentiation, trigonometric, and other miscellaneous math routines...
-    #include <math.h>
+    #include <cmath>
 
 // Within the Agni namespace...
 namespace Agni

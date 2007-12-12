@@ -28,13 +28,16 @@ namespace Agni
                                    std::string const &_sOutputAssemblyListing);
 
                 // Emit assembly listing for target or throw ...
-                void EmitAssemblyListing();
+                void EmitAssemblyListing() throw(std::string const);
 
         // Protected stuff...
         protected:
         
+            // Constants...
+            unsigned char const TabStopWidth;        
+        
             // Methods...
-                
+
                 // Get the output listing file extension for this target...
                 std::string const GetListingFileExtension() const;
     };

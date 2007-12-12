@@ -838,7 +838,8 @@ boolean CLexer::IsCharacterIdentifier(char cCharacter) const
     // Check...
     return ((cCharacter >= '0' && cCharacter <= '9') ||
             (cCharacter >= 'a' && cCharacter <= 'z') ||
-            (cCharacter >= 'A' && cCharacter <= 'Z'));
+            (cCharacter >= 'A' && cCharacter <= 'Z') ||
+            cCharacter == '_');
 }
 
 // Is character numeric?

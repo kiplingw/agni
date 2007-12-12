@@ -6,9 +6,16 @@
 // Host API functions...
 host PrintString();
 
+// Globals...
+var g_MyString;
+
 // Entry point...
 func Main()
 {
-    PrintString("Dicky Chow, tell me how.");
+    // Initialize the string...
+    g_MyString = "Dicky Chow, tell me how.";
+    
+    // Print the string through the host...
+    PrintString(MyString);
 }
 

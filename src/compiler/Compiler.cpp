@@ -195,6 +195,10 @@ bool Compiler::Compile()
             // Parse source code...
             Parser.Parse();
             
+            /*
+                TODO: Print statistics in verbose mode.
+            */
+            
         // Emit the i-code to selected machine target...
             
             // AgniVirtualMachine target backend selected...
@@ -206,6 +210,10 @@ bool Compiler::Compile()
                 // Initialize backend...
                 CAgniMachineTarget AgniMachineTarget(
                     Parser, UserParameters.GetOutputFile());
+                    
+                // Emit...
+                Verbose("emitting assembly listing...");
+                AgniMachineTarget.EmitAssemblyListing();
             }
             
             // Unsupported machine target...

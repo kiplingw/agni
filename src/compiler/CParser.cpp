@@ -405,6 +405,13 @@ CParser::ICodeNode &CParser::GetICodeNodeByImplicitIndex(
     return *Location;
 }
 
+// Get the main header...
+Agni::Agni_MainHeader const &CParser::GetMainHeader() const
+{
+    // Return a write protected reference...
+    return MainHeader;
+}
+
 // Get the next jump target index...
 CParser::InstructionListIndex CParser::GetNextJumpTargetIndex()
 {
