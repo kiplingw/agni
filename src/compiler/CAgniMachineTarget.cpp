@@ -11,7 +11,7 @@
 #include <cstring>
 #include <fstream>
 #include <ctime>
-#include <sstream>
+#include <list>
 
 // Using the Agni namepace...
 using namespace Agni;
@@ -275,11 +275,54 @@ void CAgniMachineTarget::EmitFunction(std::ofstream &Output,
         Output << sLocalVariablesBlock << std::endl;
     }
 
-    // Emit code...
-    
-        /* 
-            TODO: Write this.
-        */
+    // Create iterator for i-code...
+    std::list<CParser::ICodeNode>::const_iterator ICodeIterator;
+
+    // Emit code until none left...
+    for(ICodeIterator = Function.ICodeList.begin();
+        ICodeIterator != Function.ICodeList.end();
+      ++ICodeIterator)
+    {
+        // Get the current i-code node...
+        CParser::ICodeNode const &ICodeNode = *ICodeIterator;
+        
+        // Emit appropriately based on node type...
+        switch(ICodeNode.Type)
+        {
+            // Annotation...
+            case CParser::ICodeNode::ANNOTATION:
+            {
+                // Emit...
+                Output << "\t; " << ICodeNode.sAnnotation << std::endl;
+                
+                /*
+                    TODO: Finish this.
+                */
+                
+                // Done...
+                break;            
+            }
+            
+            // Instruction...
+            case CParser::ICodeNode::INSTRUCTION:
+            {
+                // Done...
+                break;            
+            }
+            
+            // Jump target...
+            case CParser::ICodeNode::JUMP_TARGET:
+            {
+                // Done...
+                break;
+            }
+            
+            // Unknown...
+            default:
+                throw std::string("internal fault, unknown i-code node type");
+        }
+    }
+
     
     // If there was no code, leave a comment saying so...
     if(Function.ICodeList.empty())

@@ -113,7 +113,7 @@ void CParser::AddICodeAnnotation(IdentifierScope FunctionIndex,
 {
     // Locate the function...
     CFunction &Function = GetFunctionByIndex(FunctionIndex);
-    
+
     // Create the appropriate i-node for the annotation...
     ICodeNode AnnotationNode;
     AnnotationNode.Type         = ICodeNode::ANNOTATION;
