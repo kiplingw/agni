@@ -11,6 +11,7 @@
 #include <cstring>
 #include <fstream>
 #include <ctime>
+#include <sstream>
 
 // Using the Agni namepace...
 using namespace Agni;
@@ -81,7 +82,94 @@ void CAgniMachineTarget::EmitAssemblyListing() throw(std::string const)
                        << "\tSetThreadPriority Low" << std::endl << std::endl;
 
         // Write global variables...
-        Output << "; Global variables..." << std::endl;
+        
+            // Create iterator...
+            std::map<CParser::VariableName, CParser::CVariable>::const_iterator 
+                GlobalVariableIterator;
+
+            // We only want a header if there are any globals...
+            bool bHasEmitGlobal = false;
+
+            // Emit all globals...
+            for(GlobalVariableIterator = Parser.GetVariableTable().begin();
+                GlobalVariableIterator != Parser.GetVariableTable().end();
+              ++GlobalVariableIterator)
+            {
+                // Get variable name...
+                CParser::VariableName const &Name = 
+                    GlobalVariableIterator->first;
+                
+                // Get the variable object...
+                CParser::CVariable const &Variable = 
+                    GlobalVariableIterator->second;
+                
+                // Not a global...
+                if(Name.second != CParser::Global)
+                    continue;
+
+                // Emit header, if not already...
+                if(!bHasEmitGlobal)
+                    Output << "; Global variables..." << std::endl;
+
+                // Emit global variable...
+                if(Variable.unSize == 1)
+                    Output << "var " << Name.first << ";" << std::endl;
+                
+                // Emit global array...
+                else
+                    Output << "var " << Name.first << "[" << Variable.unSize
+                           << "];" << std::endl;
+
+                // Remember that we have found at least one global...
+                bHasEmitGlobal = true;
+            }
+            
+            // Globals were emitted, shove in some white space for more stuff...
+            if(bHasEmitGlobal)
+                Output << std::endl;
+
+        // Emit each function...
+            
+            // Create iterator...
+            std::map<CParser::FunctionName, CParser::CFunction>::const_iterator 
+                FunctionIterator;
+
+            // Emit each function, except Main... (we do that last)
+            for(FunctionIterator = Parser.GetFunctionTable().begin();
+                FunctionIterator != Parser.GetFunctionTable().end();
+              ++FunctionIterator)
+            {
+                // Get the function name...
+                CParser::FunctionName const &Name = FunctionIterator->first;
+                
+                // Get the function object...
+                CParser::CFunction const &Function = FunctionIterator->second;
+                
+                // This is the main function, skip it...
+                if(Name == CParser::FunctionName("Main"))
+                    continue;
+                
+                // This is a host function, skip it...
+                if(Function.bIsHostFunction)
+                    continue;
+
+                // Emit the function...
+                EmitFunction(Output, Name, Function);
+            }
+            
+            // Emit Main function, if any...
+                
+                // Try to find Main...
+                FunctionIterator = Parser.GetFunctionTable().find(
+                    CParser::FunctionName("Main"));
+
+                // Found...
+                if(FunctionIterator != Parser.GetFunctionTable().end())
+                    EmitFunction(Output, FunctionIterator->first, 
+                                 FunctionIterator->second);
+
+            // Emit tail header...
+            Output << "; eof..." << std::endl << std::endl;
     }
 
         // Failed to write listing...
@@ -94,5 +182,110 @@ void CAgniMachineTarget::EmitAssemblyListing() throw(std::string const)
             // Pass up the error chain...
             throw sBetterReason;
         }
+}
+
+// Emit a function declaration and body...
+void CAgniMachineTarget::EmitFunction(std::ofstream &Output, 
+    CParser::FunctionName FunctionName, CParser::CFunction const &Function) 
+    throw(std::string const)
+{
+    // Variables...
+    std::string sParametersBlock;
+    std::string sLocalVariablesBlock;
+
+    // Emit header...
+
+        // For main...
+        if(FunctionName == CParser::FunctionName("Main"))
+            Output << "; Main function follows... (entry point)" << std::endl;
+        
+        // Otherwise emit ordinary header...
+        else
+            Output << "; " << FunctionName << " function follows..." 
+                   << std::endl;
+
+    // Emit declaration and brace for opening code block...
+    Output << "func " << FunctionName << std::endl
+           << "{" << std::endl;
+
+    // Create iterator for scanning through variable table...
+    std::map<CParser::VariableName, CParser::CVariable>::const_iterator 
+        VariableIterator;
+
+    // Prepare emissions for all of function's parameters and local variables...
+    for(VariableIterator = Parser.GetVariableTable().begin();
+        VariableIterator != Parser.GetVariableTable().end();
+      ++VariableIterator)
+    {
+        // Get variable name...
+        CParser::VariableName const &VariableName = VariableIterator->first;
+        
+        // Get variable object...
+        CParser::CVariable const &Variable = VariableIterator->second;
+        
+        // Scope is not for our function...
+        if(Function.GetIndex() != VariableName.second)
+            continue;
+        
+        // This is a parameter...
+        if(Variable.Type == CParser::CVariable::Parameter)
+        {
+            // Append to parameter emission block...
+            sParametersBlock += "\tparam " + VariableName.first + ";\n";
+            
+            // This should not be an array...
+            assert(Variable.unSize == 1);
+        }
+        
+        // This is a local variable...
+        else
+        {
+            // Prepare emission for a variable...
+            if(Variable.unSize == 1)
+                sLocalVariablesBlock += "\tvar " + VariableName.first + ";\n";
+
+            // Prepare emission for an array...
+            else
+            {
+                // Append to parameter emission block...
+                sLocalVariablesBlock += "\tvar " + VariableName.first + "[";
+                sLocalVariablesBlock += Variable.unSize;
+                sLocalVariablesBlock += "]\n";
+            }
+        }
+    }
+
+    // Emit parameters, if any...
+    if(Function.Parameters > 0)
+    {
+        // Header...
+        Output << "\t; Parameters..." << std::endl;
+        
+        // Emit parameters block...
+        Output << sParametersBlock << std::endl;
+    }
+
+    // Emit local variables, if any...
+    if(!sLocalVariablesBlock.empty())
+    {
+        // Header...
+        Output << "\t; Local variables..." << std::endl;
+        
+        // Emit local variables block...
+        Output << sLocalVariablesBlock << std::endl;
+    }
+
+    // Emit code...
+    
+        /* 
+            TODO: Write this.
+        */
+    
+    // If there was no code, leave a comment saying so...
+    if(Function.ICodeList.empty())
+        Output << "\t; No code..." << std::endl;
+    
+    // Emit closing brace...
+    Output << "}" << std::endl << std::endl;
 }
 

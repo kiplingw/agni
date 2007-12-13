@@ -7,15 +7,31 @@
 host PrintString();
 
 // Globals...
-var g_MyString;
+var g_MyString[3];
+
+// Sum two numbers...
+func Sum(First, Second)
+{
+    // Compute sum...
+    var Sum;
+    Sum = First + Second;
+    
+    // Return it...
+    return Sum;
+}
 
 // Entry point...
 func Main()
 {
     // Initialize the string...
-    g_MyString = "Dicky Chow, tell me how.";
+    g_MyString[5] = "Dicky Chow, tell me how.";
     
     // Print the string through the host...
-    PrintString(MyString);
+    PrintString(g_MyString[2]);
+    
+    // Compute sum...
+    PrintString("The sum of 5 and 6 is...");
+    PrintString(Sum(5, 6));
 }
+
 

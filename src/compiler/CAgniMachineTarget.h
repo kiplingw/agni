@@ -38,6 +38,12 @@ namespace Agni
         
             // Methods...
 
+                // Emit a function declaration and body...
+                void EmitFunction(std::ofstream &Output, 
+                    CParser::FunctionName Name, 
+                    CParser::CFunction const &Function) 
+                    throw(std::string const);
+
                 // Get the output listing file extension for this target...
                 std::string const GetListingFileExtension() const;
     };

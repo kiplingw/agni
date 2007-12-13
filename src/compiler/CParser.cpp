@@ -392,6 +392,14 @@ CParser::CFunction &CParser::GetFunctionByName(FunctionName Name)
     return Location->second;
 }
 
+// Get the function table...
+std::map<Agni::CParser::FunctionName, Agni::CParser::CFunction> const &
+    CParser::GetFunctionTable() const
+{
+    // Return constant reference...
+    return FunctionTable_KeyByName;
+}
+
 // Get an i-code node from within a function at the specified instruction...
 CParser::ICodeNode &CParser::GetICodeNodeByImplicitIndex(
     IdentifierScope FunctionIndex, InstructionListIndex InstructionIndex) 
@@ -494,6 +502,14 @@ uint32 CParser::GetVariableSize(VariableName Name) throw(std::string const)
     
     // Return the size to caller...
     return Variable.unSize;
+}
+
+// Get the variable table...
+std::map<Agni::CParser::VariableName, Agni::CParser::CVariable> const &
+    CParser::GetVariableTable() const
+{
+    // Return reference...
+    return VariableTable_KeyByName;
 }
 
 // Is this a function in the function table?
@@ -686,7 +702,7 @@ void CParser::ParseAssignment() throw(std::string const)
     {
         // They've accidentally tried to assign to an array without an index...
         if(Variable.unSize != 1)
-            throw std::string("you cannot assign to an array with an index"
+            throw std::string("you cannot assign to an array without an index"
                               " specified");
     }
     
@@ -1530,6 +1546,15 @@ void CParser::ParseFunction() throw(std::string const)
 
     // Consume the closing parenthesis...
     ReadToken(CLexer::TOKEN_DELIMITER_CLOSE_PARENTHESIS);
+    
+    // Consume the opening curly brace to the function's code block...
+    ReadToken(CLexer::TOKEN_DELIMITER_OPEN_CURLY_BRACE);
+    
+    // Parse the code block...
+    ParseCodeBlock();
+    
+    // Back in the global scope now...
+    CurrentScope = Global;
 }
 
 // Parse a function invokation...
@@ -2129,11 +2154,14 @@ void CParser::ParseVariable() throw(std::string const)
         ReadToken(CLexer::TOKEN_INTEGER);
         
         // Make sure the value is >= 1
-        if(::atoi(Lexer.GetCurrentLexeme().c_str()) >= 1)
+        if(::atoi(Lexer.GetCurrentLexeme().c_str()) <= 1)
             throw std::string("invalid array size");
 
         // Store the size...
         unSize = ::atoi(Lexer.GetCurrentLexeme().c_str());
+        
+        // Consume the closing brace...
+        ReadToken(CLexer::TOKEN_DELIMITER_CLOSE_BRACE);
     }
     
     // Now create a variable name for the table...
