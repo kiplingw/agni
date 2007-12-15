@@ -34,7 +34,8 @@ namespace Agni
         protected:
         
             // Constants...
-            unsigned char const TabStopWidth;        
+            unsigned char const TabStopWidth;
+            std::string const   sLabelPrefix;
         
             // Methods...
 

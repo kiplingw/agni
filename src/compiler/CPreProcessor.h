@@ -24,7 +24,6 @@
         
         // Standard libraries and templates...
         #include <string>
-        #include <sstream>
         #include <list>
         #include <vector>
 

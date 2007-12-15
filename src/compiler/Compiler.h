@@ -52,6 +52,9 @@ namespace Agni
                         // Get the optimization level...
                         uint8 const         GetOptimizationLevel() const;
                         
+                        // Get the optimization level as a string...
+                        std::string const   GetOptimizationLevelAsString() const;
+                        
                         // Get the output file name...
                         std::string const  &GetOutputFile() const;
                         

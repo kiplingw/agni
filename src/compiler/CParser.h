@@ -184,6 +184,9 @@ namespace Agni
                     
                     // Incase array indexed with variable, variable index here...
                     VariableTableIndex  OffsetVariableIndex;
+                    
+                    // Incase array indexed with register, register index here...
+                    uint8               OffsetRegister;
                 
                 }ICodeOperand;
                 
@@ -240,9 +243,11 @@ namespace Agni
                     public:
                     
                         // Constructor...
-                        CFunction(uint8 _Parameters, 
-                                  boolean _bIsHostFunction)
-                            :   Index(NextAvailableFunctionIndex++),
+                        CFunction(FunctionName const _Name,
+                                  uint8 const _Parameters, 
+                                  boolean const _bIsHostFunction)
+                            :   Name(_Name),
+                                Index(NextAvailableFunctionIndex++),
                                 Parameters(_Parameters),
                                 bIsHostFunction(_bIsHostFunction)
                         {
@@ -251,14 +256,17 @@ namespace Agni
                         // Get the function table index...
                         IdentifierScope GetIndex() const { return Index; };
                         
+                        // Function name...
+                        FunctionName const      Name;
+                        
                         // Function table index...
-                        const IdentifierScope   Index;
+                        IdentifierScope const   Index;
                         
                         // Parameter count...
                         uint8                   Parameters;
                         
                         // Agni function or external host function?
-                        boolean                 bIsHostFunction;
+                        boolean const           bIsHostFunction;
 
                         // Function's i-code list...
                         std::list<ICodeNode>    ICodeList;
@@ -286,24 +294,33 @@ namespace Agni
                             };
 
                         // Constructor...
-                        CVariable(uint32 _unSize, IdentifierType _Type)
-                            :   Index(NextAvailableVariableIndex++),
+                        CVariable(VariableName const _Name, 
+                                  uint32 const _unSize, 
+                                  IdentifierType const _Type)
+                            :   Name(_Name),
+                                Index(NextAvailableVariableIndex++),
                                 unSize(_unSize), 
                                 Type(_Type)
                         {
                         }
                         
                         // Get the variable table index...
-                        VariableTableIndex GetIndex() const { return Index; };
+                        VariableTableIndex const GetIndex() const 
+                        { 
+                            return Index; 
+                        }
+                        
+                        // Variable name...
+                        VariableName const          Name;
                         
                         // Variable index...
-                        const VariableTableIndex    Index;
+                        VariableTableIndex const    Index;
                         
                         // Size...
-                        uint32                      unSize;
+                        uint32 const                unSize;
                         
                         // Parameter or variable?
-                        IdentifierType              Type;
+                        IdentifierType const        Type;
 
                     // Private stuff...
                     private:
@@ -317,19 +334,31 @@ namespace Agni
                 // Default constructor...
                 CParser(std::vector<std::string> &InputSourceCode);
                 
-                // Generate complete i-code representation of entire source code...
-                void Parse() throw(std::string const);
-                
                 // Get the main header...
                 Agni_MainHeader const &GetMainHeader() const;
-                
+
+                // Get function via index, or throw an error...
+                CFunction &GetFunctionByIndex(IdentifierScope Index) 
+                    const throw(std::string const);
+
                 // Get the function table...
                 std::map<FunctionName, CFunction> const &GetFunctionTable() 
                     const;
-                
+
+                // Get a string by index...
+                std::string const GetStringByIndex(StringTableIndex const Index) 
+                    const;
+
+                // Get variable by index, or throw an error...
+                CVariable &GetVariableByIndex(VariableTableIndex Index) 
+                    const throw(std::string const);
+
                 // Get the variable table...
                 std::map<VariableName, CVariable> const &GetVariableTable() 
                     const;
+
+                // Generate complete i-code representation of entire source code...
+                void Parse() throw(std::string const);
 
         // Protected stuff...
         protected:
@@ -434,10 +463,6 @@ namespace Agni
                                              VariableTableIndex VariableIndex) 
                     throw(std::string const);
 
-                // Get function via index, or throw an error...
-                CFunction &GetFunctionByIndex(IdentifierScope Index) 
-                    const throw(std::string const);
-
                 // Get function via name, or throw an error...
                 CFunction &GetFunctionByName(FunctionName Name) 
                     throw(std::string const);
@@ -452,18 +477,10 @@ namespace Agni
                 // Get the next jump target index...
                 InstructionListIndex GetNextJumpTargetIndex();
 
-                // Get a string by index...
-                std::string const GetStringByIndex(StringTableIndex const Index) 
-                    const;
-
                 // Get variable by name at requested scope / global, or throw 
                 //  an error...
                 CVariable &GetVariableByName(VariableName Name) 
                     throw(std::string const);
-                
-                // Get variable by index, or throw an error...
-                CVariable &GetVariableByIndex(VariableTableIndex Index) 
-                    const throw(std::string const);
 
                 // Get size of variable using name as key...
                 uint32 GetVariableSize(VariableName Name) 

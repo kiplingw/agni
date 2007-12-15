@@ -41,7 +41,10 @@ namespace Agni
 
                 // Emit assembly listing for target or throw ...
                 virtual void EmitAssemblyListing() = 0;
-                
+
+                // Get the output file name appropriate for this backend...
+                std::string const GetOutputFile() const;
+
                 // Deconstructor...
                 virtual ~CMachineTarget_Base();
 
@@ -52,9 +55,6 @@ namespace Agni
 
                 // Get the output listing file extension for this target...
                 virtual std::string const GetListingFileExtension() const = 0;
-
-                // Get the output file name appropriate for this backend...
-                std::string const GetOutputFile() const;
 
             // Attributes...
             

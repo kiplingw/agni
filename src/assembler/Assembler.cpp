@@ -1967,7 +1967,7 @@ void Assembler::ErrorWarning(const char *pszFormat, ...)
         va_end(pArgumentList);
 
     // Output...
-    std::cout << UserParameters.GetProcessName() << ": " << unLexerLine + 1
+    std::cout << UserParameters.GetProcessName() << ":" << unLexerLine + 1
               << ": warning: " << szBuffer << std::endl;
 }
 

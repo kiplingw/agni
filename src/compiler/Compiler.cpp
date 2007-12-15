@@ -12,8 +12,9 @@
     // Command line parsing...
     #include <getopt.h>
     
-    // I/O streams...
+    // I/O and string stream...
     #include <iostream>
+    #include <sstream>
     
     // Loader class...
     #include "CLoader.h"
@@ -30,6 +31,9 @@
     // Machine target abstract base class and supported backend...
     #include "CMachineTarget_Base.h"
     #include "CAgniMachineTarget.h"
+    
+    // Command line processor...
+    #include <cstdlib>
 
 // Using the Agni namespace...
 using namespace Agni;
@@ -198,7 +202,11 @@ bool Compiler::Compile()
             /*
                 TODO: Print statistics in verbose mode.
             */
-            
+
+        // Verify the existence of a command line processor...
+        if(!system(NULL))
+            throw std::string(": error: no command line processor available");
+
         // Emit the i-code to selected machine target...
             
             // AgniVirtualMachine target backend selected...
@@ -214,6 +222,68 @@ bool Compiler::Compile()
                 // Emit...
                 Verbose("emitting assembly listing...");
                 AgniMachineTarget.EmitAssemblyListing();
+                
+                // Prepare assembler name and arguments...
+                
+                    // Path...
+                    std::string sPath;
+                    
+                        // If this is Linux, add current directory to path 
+                        //  incase this is in development tree...
+                        if(std::string("Linux") == HOST_TARGET)
+                            sPath = "PATH=$PATH:$PWD aga";
+                        else
+                            sPath = "aga";
+                    
+                    // Arguments...
+                    std::string sArguments;
+                    
+                        // It's input is our backend's output...
+                        sArguments += " --assemble " + 
+                            AgniMachineTarget.GetOutputFile();
+                        
+                        // Output...
+                        sArguments += " --output " + 
+                            UserParameters.GetOutputFile();
+                        
+                        // Optimizations... (just use compiler's setting)
+                        sArguments += " --optimization " + 
+                            UserParameters.GetOptimizationLevelAsString();
+
+                        // Verbosity... (just use compiler's setting)
+                        if(UserParameters.ShouldBeVerbose())
+                            sArguments += " --verbose";
+
+                    // Complete command...
+                    std::string const sCompleteCommand = 
+                        sPath + " " + sArguments;
+                    
+                    // Be verbose...
+                    Verbose("preparing to AgniAssembler with command line...");
+                    Verbose(sCompleteCommand);
+
+                // Invoke assembler...
+                if(!UserParameters.ShouldStopAfterCompile())
+                {
+                    // Try to launch it and check for error...
+                    if(EXIT_SUCCESS != ::system(sCompleteCommand.c_str()))
+                    {
+                        // Cleanup the listing...
+                      ::remove(AgniMachineTarget.GetOutputFile().c_str());
+                        
+                        // Alert higher handler...
+                        throw std::string(": error: assembler invocation"
+                                          " reported error");
+                    }
+                    
+                    // Assembly was ok, remove the listing...
+                    else
+                      ::remove(AgniMachineTarget.GetOutputFile().c_str());
+                }
+
+                // Requested to stop after compilation...
+                else
+                    Verbose("requested to not invoke assembly...");
             }
             
             // Unsupported machine target...
@@ -296,6 +366,17 @@ uint8 const Compiler::Parameters::GetOptimizationLevel() const
 {
     // Return it...
     return OptimizationLevel;
+}
+
+// Get the optimization level as a string...
+std::string const Compiler::Parameters::GetOptimizationLevelAsString() const
+{
+    // Plug integral value into string stream and and pop it out as a string...
+    std::stringstream StringStream;
+    StringStream << (unsigned int) GetOptimizationLevel();
+
+    // Return it...
+    return StringStream.str();
 }
 
 // Get the output file name...

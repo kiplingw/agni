@@ -7,6 +7,7 @@
 
 // Includes...
 #include "CPreProcessor.h"
+#include <sstream>
 
 // Use the Agni namespace...
 using namespace Agni;

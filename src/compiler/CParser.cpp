@@ -43,8 +43,9 @@ void CParser::AddArrayIndexRegisterICodeOperand(
     ICodeOperand    Operand;
     
     // Initialize operand to array index within register...
-    Operand.Type        = OT_ICODE_INDEX_ARRAY_REGISTER;
-    Operand.Register    = Register;
+    Operand.Type            = OT_ICODE_INDEX_ARRAY_REGISTER;
+    Operand.VariableIndex   = VariableIndex;
+    Operand.OffsetRegister  = Register;
 
     // Add the operand to the instruction...
     AddICodeOperand(FunctionIndex, InstructionIndex, Operand);
@@ -79,7 +80,7 @@ CParser::IdentifierScope CParser::AddFunction(FunctionName Name,
     // Add new function to table...
 
         // Create a new function and assume no parameters for now...
-        CFunction NewFunction(0, bIsHostFunction);
+        CFunction NewFunction(Name, 0, bIsHostFunction);
 
         // Now use the name and parameter count pair as hash key...
         FunctionTable_KeyByName.insert(make_pair(Name, NewFunction));
@@ -329,7 +330,7 @@ CParser::VariableTableIndex CParser::AddVariable(VariableName Name,
     // Add new variable to table...
 
         // Create new variable and set its attributes...
-        CVariable NewVariable(unSize, Type);
+        CVariable NewVariable(Name, unSize, Type);
     
         // Add it to the variable table using name as hash key...
         VariableTable_KeyByName.insert(std::make_pair(Name, NewVariable));

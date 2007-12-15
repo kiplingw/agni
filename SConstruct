@@ -5,11 +5,11 @@ import os
 
 # Grab environment object and prepare prettier build messages......
 env = Environment(CXXCOMSTR     = "Compiling $SOURCE ...",
-                  SHCXXCOMSTR   = "Comiling shared object $TARGET ...",
+                  SHCXXCOMSTR   = "Compiling shared object $TARGET ...",
                   LINKCOMSTR    = "Linking $TARGET ...",
-                  ARCOMSTR      = "Archiving $TARGET ...",
+                  ASCOMSTR      = "Archiving $TARGET ...",
                   RANLIBCOMSTR  = "Indexing $TARGET ...",
-                  LDMODULECOMSTR = "soiling $TARGET ...")
+                  SHLINKCOMSTR  = "Linking shared library $TARGET ...")
 
 # SCons internal settings...
 env.SourceSignatures('MD5')
