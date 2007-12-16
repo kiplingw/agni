@@ -24,7 +24,8 @@ namespace Agni
             // Methods...
 
                 // Default constructor...
-                CAgniMachineTarget(const Agni::CParser &InputParser, 
+                CAgniMachineTarget(CPreProcessor const &InputPreProcessor,
+                                   CParser const &InputParser, 
                                    std::string const &_sOutputAssemblyListing);
 
                 // Emit assembly listing for target or throw ...

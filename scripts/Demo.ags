@@ -3,6 +3,10 @@
     and assembler.
 */
 
+#sethost "Demo", 1, 0
+#setstacksize 1024
+#setthreadpriority medium
+
 // Host API functions...
 host PrintString();
 
@@ -33,6 +37,7 @@ func Main()
     PrintString("The sum of 5 and 6 is...");
     PrintString(Sum(5, 6));
     
+    // Test out some branching logic...
     if(6 > 5)
         PrintString("true");
     else

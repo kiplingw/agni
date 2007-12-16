@@ -217,7 +217,7 @@ bool Compiler::Compile()
                 
                 // Initialize backend...
                 CAgniMachineTarget AgniMachineTarget(
-                    Parser, UserParameters.GetOutputFile());
+                    PreProcessor, Parser, UserParameters.GetOutputFile());
                     
                 // Emit...
                 Verbose("emitting assembly listing...");
@@ -449,7 +449,7 @@ bool Compiler::Parameters::ParseCommandLine(int const nArguments,
 
         // Grab an option...
         /* cs.duke.edu/courses/spring04/cps108/resources/getoptman.html */
-        cOption = getopt_long(nArguments, ppszArguments, "hc:m:O:o:PSVv",
+        cOption = getopt_long(nArguments, ppszArguments, "hc:m:O:o:kPSVv",
                               LongOptions, &nOptionIndex);
 
             // End of option list...

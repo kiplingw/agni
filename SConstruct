@@ -16,7 +16,7 @@ env.SourceSignatures('MD5')
 
 # Versioning...
 env.VERSION_MAJOR   = 0
-env.VERSION_MINOR   = 94
+env.VERSION_MINOR   = 95
 env.VERSION_SVN     = os.popen('svnversion .').read()[:-1]
 env.VERSION_SVN     = env.VERSION_SVN.split(':')[-1]
 

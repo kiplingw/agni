@@ -860,6 +860,15 @@ VirtualMachine::Status
                             // Done...
                             break;
                         }
+                        
+                        // Absolute stack index in register... (1 byte)
+                        case OT_AVM_INDEX_STACK_ABSOLUTE_VIA_REGISTER:
+                        {
+                            // Load register identifier...
+                            LoadBytes(&pOperandList[usCurrentOperandIndex].
+                                      Register, sizeof(uint8), 1, hScriptFile);
+                            break;
+                        }
 
                         // Function index... (4 bytes)
                         case OT_AVM_INDEX_FUNCTION:
@@ -1693,6 +1702,47 @@ inline VirtualMachine::AVM_RuntimeValue
             // Return it...
             return GetStackValue(hCurrentThread, nAbsoluteStackIndex);
         }
+        
+        // Stack index via register, resolve...
+        case OT_AVM_INDEX_STACK_ABSOLUTE_VIA_REGISTER:
+        {
+            // Calculate absolute stack index for given register...
+            switch(OperandValue.Register)
+            {
+                // First general purpose register...
+                case REGISTER_AVM_T0:
+                    
+                    // Get stack index at Stack[_RegisterT0]...
+                    nAbsoluteStackIndex = CoerceValueToInteger(
+                        Scripts[hCurrentThread]._RegisterT0);
+                    
+                    // Done...
+                    break;
+                
+                // Second general purpose register...
+                case REGISTER_AVM_T1:
+                    
+                    // Get stack index at Stack[_RegisterT1]...
+                    nAbsoluteStackIndex = CoerceValueToInteger(
+                        Scripts[hCurrentThread]._RegisterT1);
+                    
+                    // Done...
+                    break;
+
+                // Return value...
+                case REGISTER_AVM_RETURN:
+
+                    // Get stack index at Stack[_RegisterReturn]...
+                    nAbsoluteStackIndex = CoerceValueToInteger(
+                        Scripts[hCurrentThread]._RegisterReturn);
+                    
+                    // Done...
+                    break;
+            }
+            
+            // Return it...
+            return GetStackValue(hCurrentThread, nAbsoluteStackIndex);
+        }
 
         // Register...
         case OT_AVM_REGISTER:
@@ -1779,6 +1829,50 @@ inline VirtualMachine::AVM_RuntimeValue *
             // Fetch stack index...
             nStackIndex = ResolveOperandStackIndex(OperandIndex);
 
+            // Return location...
+            return &Scripts[hCurrentThread].Stack.
+                pElements[ResolveStackIndex(hCurrentThread, nStackIndex)];
+        }
+
+        // Stack index via register, resolve...
+        case OT_AVM_INDEX_STACK_ABSOLUTE_VIA_REGISTER:
+        {
+            // Calculate absolute stack index for given register...
+            switch(Scripts[hCurrentThread].InstructionStream.
+                    pInstructions[unCurrentInstruction].
+                    pOperandList[OperandIndex].Register)
+            {
+                // First general purpose register...
+                case REGISTER_AVM_T0:
+                
+                    // Get stack index at Stack[_RegisterT0]...
+                    nStackIndex = CoerceValueToInteger(
+                        Scripts[hCurrentThread]._RegisterT0);
+
+                    // Done...
+                    break;
+                
+                // Second general purpose register...
+                case REGISTER_AVM_T1:
+
+                    // Get stack index at Stack[_RegisterT1]...
+                    nStackIndex = CoerceValueToInteger(
+                        Scripts[hCurrentThread]._RegisterT1);
+
+                    // Done...
+                    break;
+
+                // Return value...
+                case REGISTER_AVM_RETURN:
+
+                    // Get stack index at Stack[_RegisterReturn]...
+                    nStackIndex = CoerceValueToInteger(
+                        Scripts[hCurrentThread]._RegisterReturn);
+
+                    // Done...
+                    break;
+            }
+            
             // Return location...
             return &Scripts[hCurrentThread].Stack.
                 pElements[ResolveStackIndex(hCurrentThread, nStackIndex)];

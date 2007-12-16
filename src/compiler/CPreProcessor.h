@@ -26,6 +26,7 @@
         #include <string>
         #include <list>
         #include <vector>
+        #include <utility>
 
 // Within the Agni namespace...
 namespace Agni
@@ -41,7 +42,23 @@ namespace Agni
                 // Default constructor...
                 CPreProcessor(std::string const sInputRootPath, 
                               std::list<std::string> const InputSourceCodeLinkedList);
+
+                // Get host name...
+                std::string const &GetHostName() const
+                    { return sHostName; }
                 
+                // Get host major / minor version...
+                std::pair<int, int> const &GetHostVersion() const
+                    { return HostVersion; }
+               
+                // Get stack size...
+                int const &GetStackSize() const
+                    { return nStackSize; }
+               
+                // Get thread priority...
+                std::string const &GetThreadPriority() const
+                    { return sThreadPriority; }
+
                 // Process source code linked list and produce final vector form...
                 std::vector<std::string> Process();
 
@@ -55,6 +72,16 @@ namespace Agni
                 
                 // Source code linked list...
                 std::list<std::string>  SourceCodeLinkedList;
+                
+                // Host name and version...
+                std::string             sHostName;
+                std::pair<int, int>     HostVersion;
+                
+                // Stack size...
+                int                     nStackSize;
+                
+                // Thread priority...
+                std::string             sThreadPriority;
     };
 }
 

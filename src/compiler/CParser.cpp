@@ -109,16 +109,43 @@ CParser::IdentifierScope CParser::AddFunction(FunctionName Name,
 
 // Add a line of source code or something else into the i-code for human...
 void CParser::AddICodeAnnotation(IdentifierScope FunctionIndex, 
-                                 std::string const sAnnotation)
+                                 std::string const &sAnnotation)
     throw(std::string const)
 {
+    // Make a local copy so we can edit it...
+    std::string sLocal = sAnnotation;
+
+    // Trim out any leading white space...
+    for(std::string::iterator Iterator = sLocal.begin();
+        Iterator != sLocal.end();
+      ++Iterator)
+    {
+        // First non-white space found...
+        if(!CLexer::IsCharacterWhiteSpace(*Iterator))
+        {
+            // Make sure this wasn't at the beginning...
+            if(Iterator == sLocal.begin())
+                break;
+            
+            // Otherwise, strip out the white space...
+            else
+            {
+                // Strip...
+                sLocal.erase(sLocal.begin(), Iterator);
+                
+                // Done...
+                break;
+            }
+        }
+    }
+
     // Locate the function...
     CFunction &Function = GetFunctionByIndex(FunctionIndex);
 
     // Create the appropriate i-node for the annotation...
     ICodeNode AnnotationNode;
     AnnotationNode.Type         = ICodeNode::ANNOTATION;
-    AnnotationNode.sAnnotation  = sAnnotation;
+    AnnotationNode.sAnnotation  = sLocal;
     
     // Now add node to the requested function's i-code sequence...
     Function.ICodeList.push_back(AnnotationNode);
@@ -427,13 +454,6 @@ CParser::ICodeNode &CParser::GetICodeNodeByImplicitIndex(
 
     // Now return the address of the node to the caller...
     return *Location;
-}
-
-// Get the main header...
-Agni::Agni_MainHeader const &CParser::GetMainHeader() const
-{
-    // Return a write protected reference...
-    return MainHeader;
 }
 
 // Get the next jump target index...
@@ -838,7 +858,7 @@ void CParser::ParseAssignment() throw(std::string const)
                 CurrentScope, InstructionIndex, Variable.Index);
 
     // Second operand is the source... (always Intel style syntax)
-    AddVariableICodeOperand(CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
+    AddRegisterICodeOperand(CurrentScope, InstructionIndex, REGISTER_ICODE_T0);
 }
 
 // Parse a break...

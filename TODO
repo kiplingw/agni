@@ -1,3 +1,4 @@
+- deb package should install Agni executable file magic for file utility...
 - Think of fast way of host finding resources quickly by offset. Need high
   performance resource table.
 - assert() in scripts?

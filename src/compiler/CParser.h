@@ -333,9 +333,6 @@ namespace Agni
             
                 // Default constructor...
                 CParser(std::vector<std::string> &InputSourceCode);
-                
-                // Get the main header...
-                Agni_MainHeader const &GetMainHeader() const;
 
                 // Get function via index, or throw an error...
                 CFunction &GetFunctionByIndex(IdentifierScope Index) 
@@ -405,7 +402,7 @@ namespace Agni
 
                 // Add a line of source code or something else into the i-code for human...
                 void AddICodeAnnotation(IdentifierScope FunctionIndex, 
-                                        std::string const sAnnotation)
+                                        std::string const &sAnnotation)
                     throw(std::string const);
 
                 // Add i-code instruction to end of function, return index, or throw error...

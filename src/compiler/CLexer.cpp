@@ -669,6 +669,45 @@ CLexer::Token CLexer::GetNextToken()
                     unCurrentLexemeEnd += strlen("include");
                     unCurrentLexemeStart = unCurrentLexemeEnd;
                 }
+                
+                // #sethost detected...
+                if(SourceCode[unCurrentLine].compare(unCurrentLexemeEnd, 
+                   strlen("sethost"), "sethost") == 0)
+                {
+                    // Remember token and finish building lexeme...
+                    TempToken = TOKEN_PREPROCESSOR_SETHOST;
+                    sCurrentLexeme += "sethost";
+
+                    // The new lexeme begins at the end of the last one...
+                    unCurrentLexemeEnd += strlen("sethost");
+                    unCurrentLexemeStart = unCurrentLexemeEnd;
+                }
+                
+                // #setstacksize detected...
+                if(SourceCode[unCurrentLine].compare(unCurrentLexemeEnd, 
+                   strlen("setstacksize"), "setstacksize") == 0)
+                {
+                    // Remember token and finish building lexeme...
+                    TempToken = TOKEN_PREPROCESSOR_SETSTACKSIZE;
+                    sCurrentLexeme += "setstacksize";
+
+                    // The new lexeme begins at the end of the last one...
+                    unCurrentLexemeEnd += strlen("setstacksize");
+                    unCurrentLexemeStart = unCurrentLexemeEnd;
+                }
+
+                // #setthreadpriority...
+                if(SourceCode[unCurrentLine].compare(unCurrentLexemeEnd, 
+                   strlen("setthreadpriority"), "setthreadpriority") == 0)
+                {
+                    // Remember token and finish building lexeme...
+                    TempToken = TOKEN_PREPROCESSOR_SETTHREADPRIORITY;
+                    sCurrentLexeme += "setthreadpriority";
+
+                    // The new lexeme begins at the end of the last one...
+                    unCurrentLexemeEnd += strlen("setthreadpriority");
+                    unCurrentLexemeStart = unCurrentLexemeEnd;
+                }
             }
 
             // Done...
@@ -825,7 +864,7 @@ uint8 CLexer::GetOperatorStateIndex(char cCharacter,
 }
 
 // Is character a delimiter?
-boolean CLexer::IsCharacterDelimiter(char cCharacter) const
+bool CLexer::IsCharacterDelimiter(char cCharacter) const
 {
     // Check in constant time...
     return (Delimiters[(unsigned int) cCharacter] == cCharacter);
@@ -833,7 +872,7 @@ boolean CLexer::IsCharacterDelimiter(char cCharacter) const
 }
 
 // Is character an identifier?
-boolean CLexer::IsCharacterIdentifier(char cCharacter) const
+bool CLexer::IsCharacterIdentifier(char cCharacter) const
 {
     // Check...
     return ((cCharacter >= '0' && cCharacter <= '9') ||
@@ -843,14 +882,14 @@ boolean CLexer::IsCharacterIdentifier(char cCharacter) const
 }
 
 // Is character numeric?
-boolean CLexer::IsCharacterNumeric(char cCharacter) const
+bool CLexer::IsCharacterNumeric(char cCharacter) const
 {
     // Check...
     return (cCharacter >= '0' && cCharacter <= '9');
 }
 
 // Is character an operator or at least a part of one?
-boolean CLexer::IsCharacterOperator(char cCharacter, uint8 CharacterIndex) const
+bool CLexer::IsCharacterOperator(char cCharacter, uint8 CharacterIndex) const
 {
     // Variables...
     uint8   CurrentStateIndex   = 0;
@@ -895,7 +934,7 @@ boolean CLexer::IsCharacterOperator(char cCharacter, uint8 CharacterIndex) const
 }
 
 // Is character a piece of white space?
-boolean CLexer::IsCharacterWhiteSpace(char cCharacter) const
+bool CLexer::IsCharacterWhiteSpace(char cCharacter)
 {
     // Check...
     return (cCharacter == ' ' || cCharacter == '\t' || cCharacter == '\n');
@@ -1005,6 +1044,13 @@ const std::string CLexer::TokenToString(const Token token) const
         
         // Source file inclusion...
         case TOKEN_PREPROCESSOR_INCLUDE: return std::string("#include");
+        
+        // Environment setting...
+        case TOKEN_PREPROCESSOR_SETHOST: return std::string("#sethost");
+        case TOKEN_PREPROCESSOR_SETSTACKSIZE: 
+            return std::string("#setstacksize");
+        case TOKEN_PREPROCESSOR_SETTHREADPRIORITY: 
+            return std::string("#setthreadpriority");
 
         // Unhandled token...
         default: return std::string("___unknown_token___");

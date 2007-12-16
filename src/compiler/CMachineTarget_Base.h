@@ -21,6 +21,9 @@
         // C++ string...
         #include <string>
 
+        // Pre-processor class...
+        #include "CPreProcessor.h"
+
         // Parser class...
         #include "CParser.h"
 
@@ -36,7 +39,8 @@ namespace Agni
             // Methods...
 
                 // Default constructor...
-                CMachineTarget_Base(CParser const &InputParser, 
+                CMachineTarget_Base(CPreProcessor const &InputPreProcessor,
+                                    CParser const &InputParser, 
                                     std::string const &_sOutputAssemblyListing);
 
                 // Emit assembly listing for target or throw ...
@@ -58,6 +62,9 @@ namespace Agni
 
             // Attributes...
             
+                // Pre-processor reference...
+                CPreProcessor const &PreProcessor;
+
                 // Parser reference...
                 CParser const &Parser;
                 

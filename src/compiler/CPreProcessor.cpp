@@ -17,7 +17,11 @@ CPreProcessor::CPreProcessor(
     std::string const sInputRootPath, 
     std::list<std::string> const InputSourceCodeLinkedList)
     : sRootPath(sInputRootPath),
-      SourceCodeLinkedList(InputSourceCodeLinkedList)
+      SourceCodeLinkedList(InputSourceCodeLinkedList),
+      sHostName("unknown"),
+      HostVersion(std::make_pair(0, 0)),
+      nStackSize(0),
+      sThreadPriority("low")
 {
 
 }
@@ -69,7 +73,7 @@ std::vector<std::string> CPreProcessor::Process()
                 {
                     // *Gasp*, we're already within a block comment...
                     if(bWithinBlockComment)
-                        throw "nested block comment detected";
+                        std::string("nested block comment detected");
                     
                     // Toggle block comment state...
                     bWithinBlockComment = true;
@@ -98,7 +102,7 @@ std::vector<std::string> CPreProcessor::Process()
         
         // Check for unterminated block comment...
         if(bWithinBlockComment)
-            throw "unterminated block comment";
+            std::string("unterminated block comment");
             
         // Handle directives...
         for(ListIterator = SourceCodeLinkedList.begin(), unLine = 1;
@@ -152,6 +156,105 @@ std::vector<std::string> CPreProcessor::Process()
                     SourceCodeLinkedList.insert(ListIterator, 
                                                 NewSourceCode.begin(), 
                                                 NewSourceCode.end());
+                }
+                
+                // #sethost detected... (name, major, minor)
+                if(PreProcessorLexer.GetCurrentToken() 
+                    == CLexer::TOKEN_PREPROCESSOR_SETHOST)
+                {
+                    // Host name...
+
+                        // Verify the next token is indeed the host name...
+                        if(PreProcessorLexer.GetNextToken() != CLexer::TOKEN_STRING)
+                            throw std::string("bad #sethost host name");
+
+                        // Store name...
+                        sHostName = PreProcessorLexer.GetCurrentLexeme();
+                    
+                    // Major version...
+
+                        // Verify the next token is comma and then major...
+                        if(PreProcessorLexer.GetNextToken() != CLexer::TOKEN_DELIMITER_COMMA ||
+                           PreProcessorLexer.GetNextToken() != CLexer::TOKEN_INTEGER)
+                            throw std::string("bad #sethost major version");
+
+                        // Store major version...
+                        HostVersion.first = 
+                          ::atoi(PreProcessorLexer.GetCurrentLexeme().c_str());
+
+                    // Minor version...
+
+                        // Verify the next token is comma and then minor...
+                        if(PreProcessorLexer.GetNextToken() != CLexer::TOKEN_DELIMITER_COMMA ||
+                           PreProcessorLexer.GetNextToken() != CLexer::TOKEN_INTEGER)
+                            throw std::string("bad #sethost minor version");
+
+                        // Store minor version...
+                        HostVersion.second = 
+                          ::atoi(PreProcessorLexer.GetCurrentLexeme().c_str());
+
+                    // Clear the line with the #sethost directive...
+                    sCurrentLine = "\n";
+                }
+                
+                // #setstacksize detected... (0..n)
+                if(PreProcessorLexer.GetCurrentToken() 
+                    == CLexer::TOKEN_PREPROCESSOR_SETSTACKSIZE)
+                {
+                    // Verify the next token is integral value...
+                    if(PreProcessorLexer.GetNextToken() != CLexer::TOKEN_INTEGER)
+                        throw std::string("bad #setstacksize size");
+
+                    // Store the requested stack size...
+                    nStackSize = ::atoi(
+                        PreProcessorLexer.GetCurrentLexeme().c_str());
+
+                    // Clear the line with the #setstacksize directive...
+                    sCurrentLine = "\n";
+                }
+                
+                // #setthreadpriority... (low|medium|high|n ms)
+                if(PreProcessorLexer.GetCurrentToken() 
+                    == CLexer::TOKEN_PREPROCESSOR_SETTHREADPRIORITY)
+                {
+                    // Seek to argument...
+                    PreProcessorLexer.GetNextToken();
+
+                    // low / medium / high argument...
+                    if(PreProcessorLexer.GetCurrentToken() == 
+                        CLexer::TOKEN_IDENTIFIER)
+                    {
+                        // Get priority...
+                        sThreadPriority = PreProcessorLexer.GetCurrentLexeme();
+
+                        // Must be one of aforementioned...
+                        if(sThreadPriority != "low" && 
+                           sThreadPriority != "medium" && 
+                           sThreadPriority != "high")
+                            std::string("bad #setthreadpriority argument");
+                    }
+                    
+                    // Explicit time slice...
+                    else if(PreProcessorLexer.GetCurrentToken() == 
+                        CLexer::TOKEN_INTEGER)
+                    {
+                        // Get priority...
+                        sThreadPriority = PreProcessorLexer.GetCurrentLexeme();
+
+                        // Next token should be ms identifier...
+                        if(PreProcessorLexer.GetNextToken() !=
+                            CLexer::TOKEN_IDENTIFIER ||
+                           PreProcessorLexer.GetCurrentLexeme() != "ms")
+                            throw std::string("bad #setthreadpriority explicit"
+                                              " time slice");
+                    }
+                    
+                    // Unknown argument...
+                    else
+                        throw std::string("bad #setthreadpriority argument");
+                    
+                    // Clear the line with the #setthreadpriority directive...
+                    sCurrentLine = "\n";
                 }
             }
         }

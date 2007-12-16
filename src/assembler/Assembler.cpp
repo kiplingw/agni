@@ -802,7 +802,7 @@ boolean Assembler::Assemble()
 
                             // Invalid...
                             else
-                                throw "invalid directive parameter";
+                                throw "unrecognized thread priority";
 
                             // Done...
                             break;
@@ -815,20 +815,20 @@ boolean Assembler::Assemble()
                                 = THREAD_PRIORITY_USER;
 
                             // Check for valid time...
-                            if(atoi(GetCurrentLexeme()) <= 0)
+                            if(::atoi(GetCurrentLexeme()) <= 0)
                                 throw "thread priority must be greater than 0 ms";
 
                             // Store...
                             MainHeader.unThreadPriorityUser
-                                = atoi(GetCurrentLexeme());
+                                = ::atoi(GetCurrentLexeme());
 
                             // Next token should be ms...
                             if(GetNextToken() != TOKEN_IDENTIFIER)
-                                throw "invalid directive parameter";
+                                throw "unknown thread priority";
 
                             // Check...
                             if(strcasecmp(GetCurrentLexeme(), "ms") != 0)
-                                throw "invalid directive parameter";
+                                throw "invalid explicit thread priority";
 
                             // Done...
                             break;
@@ -836,7 +836,6 @@ boolean Assembler::Assemble()
                         // Invalid...
                         default:
                             throw "invalid directive parameter";
-
                     }
 
                     // Done...
@@ -1530,6 +1529,42 @@ boolean Assembler::Assemble()
                                             // Store absolute stack index...
                                             pOperands[nCurrentOperandIndex].nStackIndex[0]
                                                 = nBaseIndex + nOffsetIndex;
+                                        }
+                                        
+                                        // T0 register index...
+                                        else if(Token == TOKEN_REGISTER_T0)
+                                        {
+                                            // Store operand type...
+                                            pOperands[nCurrentOperandIndex].OperandType
+                                                = OT_AVM_INDEX_STACK_ABSOLUTE_VIA_REGISTER;
+                                            
+                                            // Store the register id...
+                                            pOperands[nCurrentOperandIndex].Register 
+                                                = TOKEN_REGISTER_T0;
+                                        }
+                                        
+                                        // T1 register index...
+                                        else if(Token == TOKEN_REGISTER_T1)
+                                        {
+                                            // Store operand type...
+                                            pOperands[nCurrentOperandIndex].OperandType
+                                                = OT_AVM_INDEX_STACK_ABSOLUTE_VIA_REGISTER;
+                                            
+                                            // Store the register id...
+                                            pOperands[nCurrentOperandIndex].Register 
+                                                = TOKEN_REGISTER_T1;
+                                        }
+                                        
+                                        // Return register index...
+                                        else if(Token == TOKEN_REGISTER_RETURN)
+                                        {
+                                            // Store operand type...
+                                            pOperands[nCurrentOperandIndex].OperandType
+                                                = OT_AVM_INDEX_STACK_ABSOLUTE_VIA_REGISTER;
+                                            
+                                            // Store the register id...
+                                            pOperands[nCurrentOperandIndex].Register 
+                                                = TOKEN_REGISTER_RETURN;
                                         }
 
                                         // Variable index...
@@ -3350,6 +3385,18 @@ void Assembler::WriteExecutable()
 
                             // Done...
                             break;
+                        }
+
+                        // Absolute stack index via register...
+                        case OT_AVM_INDEX_STACK_ABSOLUTE_VIA_REGISTER:
+                        {
+                            // Output... (1 byte)
+                            Write_BufferBytes(&pInstructionStream[unInstructionIndex].
+                                              pOperandList[unOperandIndex].
+                                              Register, sizeof(uint8));
+
+                            // Done...
+                            break;                        
                         }
 
                         // Relative stack index...

@@ -95,7 +95,13 @@ namespace Agni
                         TOKEN_PREPROCESSOR_ERROR,
                         
                         // Source file inclusion...
-                        TOKEN_PREPROCESSOR_INCLUDE
+                        TOKEN_PREPROCESSOR_INCLUDE,
+                        
+                        // Environment setting...
+                        TOKEN_PREPROCESSOR_SETHOST, /* name, major, minor */
+                        TOKEN_PREPROCESSOR_SETSTACKSIZE, /* 0..n */
+                        TOKEN_PREPROCESSOR_SETTHREADPRIORITY /* low|medium|high|n ms */
+                        
                 }Token;
 
                 // Operators...
@@ -202,6 +208,9 @@ namespace Agni
                 
                 // Get the current token as a string...
                 std::string const       GetCurrentTokenAsString() const;
+
+                // Is the character white space?
+                static bool             IsCharacterWhiteSpace(char cCharacter);
 
                 // Initialize lexer state from another's...
                 CLexer                 &operator=(const CLexer &SourceLexer);
@@ -322,13 +331,11 @@ namespace Agni
                                             uint8 SubStateCount) const;
 
                 // Character identification...
-                boolean IsCharacterDelimiter(char cCharacter) const;
-                boolean IsCharacterIdentifier(char cCharacter) const;
-                boolean IsCharacterNumeric(char cCharacter) const;
-                boolean IsCharacterOperator(char cCharacter, 
-                                            uint8 CharacterIndex) const;
-                boolean IsCharacterWhiteSpace(char cCharacter) const;
-                
+                bool             IsCharacterDelimiter(char cCharacter) const;
+                bool             IsCharacterIdentifier(char cCharacter) const;
+                bool             IsCharacterNumeric(char cCharacter) const;
+                bool             IsCharacterOperator(
+                    char cCharacter, uint8 CharacterIndex) const;
     };
 }
 

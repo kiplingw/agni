@@ -16,8 +16,10 @@ using namespace Agni;
 
 // Default constructor...
 CMachineTarget_Base::CMachineTarget_Base(
+    Agni::CPreProcessor const &InputPreProcessor,
     Agni::CParser const &InputParser, std::string const &_sOutputAssemblyListing)
-    : Parser(InputParser),
+    : PreProcessor(InputPreProcessor),
+      Parser(InputParser),
       sOutputAssemblyListing(_sOutputAssemblyListing)
 {    
 

@@ -205,6 +205,7 @@ namespace Agni
             OT_AVM_INDEX_STRING,
             OT_AVM_STRING,
             OT_AVM_INDEX_STACK_ABSOLUTE,
+            OT_AVM_INDEX_STACK_ABSOLUTE_VIA_REGISTER,
             OT_AVM_INDEX_STACK_RELATIVE,
             OT_AVM_INDEX_INSTRUCTION,
             OT_AVM_INDEX_FUNCTION,

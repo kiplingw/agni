@@ -18,8 +18,11 @@ using namespace Agni;
 
 // Default constructor...
 CAgniMachineTarget::CAgniMachineTarget(
-    Agni::CParser const &InputParser, std::string const &_sOutputAssemblyListing)
-    : CMachineTarget_Base(InputParser, _sOutputAssemblyListing),
+    Agni::CPreProcessor const &InputPreProcessor,
+    Agni::CParser const &InputParser, 
+    std::string const &_sOutputAssemblyListing)
+    : CMachineTarget_Base(InputPreProcessor, InputParser, 
+                          _sOutputAssemblyListing),
       TabStopWidth(4),
       sLabelPrefix("_L")
 {
@@ -40,7 +43,6 @@ void CAgniMachineTarget::EmitAssemblyListing() throw(std::string const)
     std::ofstream           Output;
     time_t                  RawTime     = 0;
     struct tm              *pTimeInfo   = NULL;
-    Agni_MainHeader const  &MainHeader  = Parser.GetMainHeader();
     
     // Try to write out listing...
     try
@@ -73,14 +75,32 @@ void CAgniMachineTarget::EmitAssemblyListing() throw(std::string const)
         // Write directives...
         Output << "; Preprocessor directives..." << std::endl << std::endl;
                 
+                // Host...
+                Output << "\t; Host..." << std::endl
+                       << "\tSetHost \"" << PreProcessor.GetHostName() 
+                       << "\", " << PreProcessor.GetHostVersion().first 
+                       << ", " << PreProcessor.GetHostVersion().second
+                       << std::endl << std::endl;
+
                 // Stack size...
                 Output << "\t; Stack size..." << std::endl
-                       << "\tSetStackSize " << MainHeader.unStackSize
+                       << "\tSetStackSize " << PreProcessor.GetStackSize()
                        << std::endl << std::endl;
 
                 // Thread priority...
                 Output << "\t; Thread priority..." << std::endl
-                       << "\tSetThreadPriority Low" << std::endl << std::endl;
+                       << "\tSetThreadPriority ";
+
+                    // Preset...
+                    if(::atoi(PreProcessor.GetThreadPriority().c_str()) <= 0)
+                        Output << PreProcessor.GetThreadPriority();
+
+                    // Explicit time slice...
+                    else
+                        Output << PreProcessor.GetThreadPriority() << " ms";
+
+                    // Finish line...
+                    Output << std::endl << std::endl;
 
         // Write global variables...
         
@@ -287,7 +307,7 @@ void CAgniMachineTarget::EmitFunction(std::ofstream &Output,
     {
         // Get the current i-code node...
         CParser::ICodeNode const &ICodeNode = *ICodeIterator;
-        
+
         // Emit appropriately based on node type...
         switch(ICodeNode.Type)
         {
@@ -295,7 +315,8 @@ void CAgniMachineTarget::EmitFunction(std::ofstream &Output,
             case CParser::ICodeNode::ANNOTATION:
             {
                 // Emit...
-                Output << "\t; " << ICodeNode.sAnnotation << std::endl;
+                Output << std::endl << "\t; " << ICodeNode.sAnnotation 
+                       << std::endl;
                 
                 // Done...
                 break;            
@@ -398,7 +419,7 @@ void CAgniMachineTarget::EmitFunction(std::ofstream &Output,
                 }
 
                 // Emit the mnemonic...
-                Output << "\t\t" << sTemp;
+                Output << "\t" << sTemp;
 
                 // Emit each operand, if any...
                 for(std::list<CParser::ICodeOperand>::const_iterator 
@@ -449,7 +470,7 @@ void CAgniMachineTarget::EmitFunction(std::ofstream &Output,
                             // Emit...
                             Output << Parser.GetVariableByIndex(
                                 OperandIterator->VariableIndex).Name.first;
-                            
+
                             // Done...
                             break;
                         }
@@ -500,7 +521,7 @@ void CAgniMachineTarget::EmitFunction(std::ofstream &Output,
                                 case CParser::REGISTER_ICODE_T0:
                                 {
                                     // Emit...
-                                    Output << "_RegisterT0";
+                                    Output << "[_RegisterT0]";
                                     
                                     // Done...
                                     break;
@@ -510,7 +531,7 @@ void CAgniMachineTarget::EmitFunction(std::ofstream &Output,
                                 case CParser::REGISTER_ICODE_T1:
                                 {
                                     // Emit...
-                                    Output << "_RegisterT1";
+                                    Output << "[_RegisterT1]";
                                     
                                     // Done...
                                     break;
@@ -520,7 +541,7 @@ void CAgniMachineTarget::EmitFunction(std::ofstream &Output,
                                 case CParser::REGISTER_ICODE_RETURN:
                                 {
                                     // Emit...
-                                    Output << "_RegisterReturn";
+                                    Output << "[_RegisterReturn]";
                                     
                                     // Done...
                                     break;
